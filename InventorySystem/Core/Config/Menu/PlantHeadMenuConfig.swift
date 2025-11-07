@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PlantHeadMenuConfig {
     static let items: [MenuItem] = [
+        MenuItem(icon: "house.fill", title: "Factory", destination: AnyView(PlantHeadRootContainer())),
         MenuItem(icon: "square.grid.2x2", title: "Dashboard", destination: AnyView(PHDashboardView())),
         MenuItem(icon: "cube.box", title: "Products", destination: AnyView(PHProductView())),
         MenuItem(icon: "wrench.and.screwdriver", title: "Tools", destination: AnyView(PHToolView())),

@@ -24,7 +24,7 @@ extension AppEntryView {
             }
         case .plantHead:
             DashboardContainer(menuItems: PlantHeadMenuConfig.items) {
-                PHDashboardView()
+                PlantHeadRootContainer()
             }
             
             // TODO: setup menu config for these roles

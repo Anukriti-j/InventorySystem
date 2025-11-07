@@ -11,3 +11,7 @@ struct InventorySystemApp: App {
         }
     }
 }
+
+
+// make init private for all singeton services
+// PHPersonnelView - check if add supervisor button is appearing only when no supervisor is get and gettin supervisor correctly

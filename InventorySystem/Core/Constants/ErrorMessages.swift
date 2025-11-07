@@ -9,7 +9,7 @@ enum ErrorMessages {
     case notRecognized
     case unknownError
     
-    var errorDescription: String? {
+    var errorDescription: String {
         
         switch self {
         case .requiredField:
