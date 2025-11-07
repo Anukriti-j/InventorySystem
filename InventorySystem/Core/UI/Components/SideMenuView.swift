@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SideMenuView: View {
-    @Environment(NavigationManager.self) private var manager: NavigationManager
+    @Environment(SessionManager.self) private var manager: SessionManager
     let items: [MenuItem]
     @Environment(\.showMenuBinding) var showMenu
     
@@ -9,8 +9,11 @@ struct SideMenuView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 25) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Inventory System")
+                    Text(manager.name ?? "Unknown")
                         .font(.title.bold())
+                    Text(manager.email ?? "Not found")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondaryText)
                     Text(manager.userRole?.rawValue.capitalized ?? "Unknown")
                         .font(.subheadline)
                         .foregroundColor(.gray)
@@ -20,26 +23,38 @@ struct SideMenuView: View {
                 Divider().padding(.vertical)
                 
                 ForEach(items) { item in
+                    let isSelected = manager.selectedMenuID == item.id
+                    
                     Button {
                         if let view = item.destination {
                             manager.selectedScreen = view
+                            manager.selectedMenuID = item.id
                             withAnimation { showMenu.wrappedValue = false }
                         }
                     } label: {
-                        HStack(spacing: 15) {
-                            Image(systemName: item.icon)
-                                .frame(width: 22)
-                            Text(item.title)
+                        HStack(spacing: 12) {
+                            // ✅ Left indicator
+                            Rectangle()
+                                .fill(isSelected ? Color.blue : .clear)
+                                .frame(width: 4)
+                            
+                            HStack(spacing: 14) {
+                                Image(systemName: item.icon)
+                                Text(item.title)
+                            }
+                            .foregroundColor(isSelected ? .blue : .primary)
+                            .padding(.vertical, 12)
+                            .padding(.leading, 4)
                         }
-                        .font(.headline)
-                        .padding(.vertical, 8)
-                    }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(isSelected ? Color.blue.opacity(0.08) : .clear)                    }
+                    .buttonStyle(.plain)
                 }
                 
                 Spacer()
                 
                 Button {
-                    manager.logout()
+                    manager.clearUserSession()
                 } label: {
                     HStack {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -61,7 +76,7 @@ struct SideMenuView: View {
     SideMenuView(items: [
         MenuItem(icon: "person.fill", title: "Person", destination: AnyView(Text("Preview Screen")))
     ])
-    .environment(NavigationManager())
+    .environment(SessionManager())
     .environment(\.showMenuBinding, .constant(false))
 }
 

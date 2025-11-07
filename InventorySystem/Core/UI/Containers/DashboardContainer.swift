@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DashboardContainer<Content: View>: View {
-    @Environment(NavigationManager.self) private var manager: NavigationManager
+    @Environment(SessionManager.self) private var manager: SessionManager
     @State private var showMenu = false
     
     let menuItems: [MenuItem]

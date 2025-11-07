@@ -6,6 +6,8 @@ enum ErrorMessages {
     case requiredPassword
     case invalidEmail
     case invalidPassword
+    case notRecognized
+    case unknownError
     
     var errorDescription: String? {
         
@@ -20,6 +22,10 @@ enum ErrorMessages {
             return "Enter a valid email address"
         case .invalidPassword:
             return "Password must be at least 6 characters"
+        case .notRecognized:
+            return "User role not recognized"
+        case .unknownError:
+            return "Something went wrong. Please try again"
         }
     }
 }

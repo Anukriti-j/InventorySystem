@@ -1,11 +1,11 @@
 import Foundation
 
 enum UserRole: String {
-    case owner = "Owner"
-    case plantHead = "PlantHead"
-    case chiefSupervisor = "Chief Supervisor"
-    case worker = "Worker"
-    case centralOfficer = "Central Officer"
-    case distributor = "Distributor"
-    case customer = "Customer"
+    case owner = "OWNER"
+    case plantHead = "PLANTHEAD"
+    case chiefSupervisor = "CHIEFSUPERVISOR"
+    case worker = "WORKER"
+    case centralOfficer = "CENTRALOFFICE"
+    case distributor = "DISTRIBUTOR"
+    case customer = "CUSTOMER"
 }

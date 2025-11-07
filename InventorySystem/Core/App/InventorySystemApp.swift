@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct InventorySystemApp: App {
-    @State var manager = NavigationManager()
+    @State var manager = SessionManager()
     
     var body: some Scene {
         WindowGroup {

@@ -12,7 +12,7 @@ struct OwnerMenuConfig {
         MenuItem(icon: "shippingbox.circle", title: "Distributor", destination: AnyView(OwnerDistributorView())),
         MenuItem(icon: "person.crop.circle", title: "Customer", destination: AnyView(OwnerCustomerView())),
         MenuItem(icon: "person.2.badge.gearshape", title: "Worker", destination: AnyView(OwnerWorkerView())),
-        MenuItem(icon: "person.fill", title: "Personnel Management", destination: AnyView(OwnerPersonnelView())),
-        MenuItem(icon: "tag", title: "Merchandise", destination: AnyView(OwnerMerchandiseView())) 
+        MenuItem(icon: "person.fill", title: "PlantHeads", destination: AnyView(OwnerPlantHeadListView())),
+        MenuItem(icon: "tag", title: "Merchandise", destination: AnyView(OwnerMerchandiseView()))
     ]
 }

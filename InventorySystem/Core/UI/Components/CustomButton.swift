@@ -7,7 +7,6 @@ struct CustomButton: ViewModifier {
             .background(Color.primaryDark)
             .cornerRadius(8)
             .shadow(color: Color.primaryLight.opacity(0.5) , radius: 4)
-            .foregroundStyle(.black)
             .padding()
     }
 }

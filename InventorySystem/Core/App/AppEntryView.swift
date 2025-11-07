@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct AppEntryView: View {
-    @Environment(NavigationManager.self) var manager
+    @Environment(SessionManager.self) var manager
     
     var body: some View {
             Group {

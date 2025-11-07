@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @Environment(SessionManager.self) private var sessionManager: SessionManager
     @State private var viewModel: LoginViewModel = LoginViewModel()
     @FocusState private var focusedField: Field?
     
@@ -45,12 +46,17 @@ struct LoginView: View {
             
             Button {
                 Task {
-                    await viewModel.handleLogin()
+                    await viewModel.handleLogin(sessionManager: sessionManager)
                 }
-               
+                
             } label: {
-                Text("Login")
-                    .foregroundColor(Color.text)
+                if viewModel.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Text("Login")
+                        .foregroundColor(Color.text)
+                }
             }
             .customStyle()
             
@@ -61,22 +67,19 @@ struct LoginView: View {
                     SignUpView()
                 }
             }
-            
-            //MARK: Remove this mock api response
-            ForEach(viewModel.response ?? []) { loginResponse in
-                Text("\(loginResponse.name)")
-            }
-            
         }
+        .padding()
         .onChange(of: viewModel.shouldFocusField) { _, newValue in
             focusedField = newValue
         }
         .onChange(of: focusedField) { _, newValue in
             viewModel.shouldFocusField = newValue
         }
-        .padding()
+        .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
+            Button("OK", role: .cancel, action: {}) }
     }
 }
+
 
 struct InputField: View {
     let label: String
