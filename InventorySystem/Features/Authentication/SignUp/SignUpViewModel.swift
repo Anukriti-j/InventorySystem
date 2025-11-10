@@ -12,9 +12,7 @@ class SignUpViewModel {
     var passwordError: String? = nil
     
     func handleSignUp() {
-        nameError = nil
-        emailError = nil
-        passwordError = nil
+        resetForm()
         
         if name.isEmpty {
             shouldFocusField = .name
@@ -49,5 +47,10 @@ class SignUpViewModel {
         print("SignUp success")
     }
 
+    private func resetForm() {
+        nameError = nil
+        emailError = nil
+        passwordError = nil
+    }
 }
 

@@ -2,15 +2,16 @@ import SwiftUI
 
 struct AddCentralOfficerView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = AddCentralOfficerViewModel()
+   @StateObject private var viewModel = AddCentralOfficerViewModel()
     
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Central Officer Details")) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        TextField("Name", text: $viewModel.name)
-                            .autocapitalization(.words)
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Full Name", text: $viewModel.name)
+                            .textContentType(.name)
+                            .autocorrectionDisabled()
                         
                         if let error = viewModel.nameError {
                             Text(error)
@@ -19,10 +20,12 @@ struct AddCentralOfficerView: View {
                         }
                     }
                     
-                    VStack(alignment: .leading, spacing: 6) {
-                        TextField("Email", text: $viewModel.email)
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Email Address", text: $viewModel.email)
+                            .textContentType(.emailAddress)
                             .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
                         
                         if let error = viewModel.emailError {
                             Text(error)
@@ -30,32 +33,36 @@ struct AddCentralOfficerView: View {
                                 .foregroundColor(.red)
                         }
                     }
-                }
+                } header: {
+                    Text("Officer Information")
+                } 
             }
             .navigationTitle("Add Central Officer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await viewModel.createCentralOfficer() }
-                    } label: {
-                        Text("Save").bold()
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        Task {
+                            await  viewModel.createCentralOfficer()
+                        }
+                    }
+                    .fontWeight(.semibold)
                     .disabled(!viewModel.isFormValid)
                 }
             }
-        }
-        .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
-            Button("OK") {
-                if viewModel.success { dismiss() }
+            .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
+                Button("OK") {
+                    if viewModel.success {
+                        dismiss()
+                    }
+                }
             }
         }
     }
-}
-
-#Preview {
-    AddCentralOfficerView()
 }

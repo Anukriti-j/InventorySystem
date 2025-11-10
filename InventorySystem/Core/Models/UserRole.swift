@@ -8,4 +8,5 @@ enum UserRole: String {
     case centralOfficer = "CENTRALOFFICE"
     case distributor = "DISTRIBUTOR"
     case customer = "CUSTOMER"
+    case unknown = "UNKNOWN"
 }

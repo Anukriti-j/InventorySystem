@@ -3,16 +3,17 @@ import SwiftUI
 
 struct FactoryInfoCardView: View {
     @Bindable var viewModel: OwnerFactoryViewModel
-    let title: String
-    let subtitle: String?
-    let infoRows: [(label: String, value: String)]
+    let factoryID: Int
+    let factoryName: String
+    let location: String?
+    let infoRows: [InfoRow]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(title)
+                    Text(factoryName)
                         .font(.system(size: 20, weight: .bold))
                     Spacer()
                     Button {
@@ -21,7 +22,7 @@ struct FactoryInfoCardView: View {
                         Image(systemName: "pencil")
                     }
                     Button {
-                        // TODO: Delete factory popup
+                        viewModel.prepareDelete(factoryId: factoryID)
                         viewModel.showDeletePopUp = true
                     } label: {
                         Image(systemName: "trash")
@@ -31,8 +32,8 @@ struct FactoryInfoCardView: View {
                     
                 }
                 
-                if let subtitle {
-                    Text(subtitle)
+                if let location {
+                    Text(location)
                         .font(.system(size: 13, weight: .semibold))
                 }
             }
@@ -56,7 +57,7 @@ struct FactoryInfoCardView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.gray)
                 Spacer()
-                Text("Active")
+                Text("")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(isActive ? .green : .red)
             }

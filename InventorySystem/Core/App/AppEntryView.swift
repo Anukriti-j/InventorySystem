@@ -17,7 +17,7 @@ struct AppEntryView: View {
 extension AppEntryView {
     @ViewBuilder
     private func dashboardViewForRole() -> some View {
-        switch manager.userRole {
+        switch manager.user?.userRole {
         case .owner:
             DashboardContainer(menuItems: OwnerMenuConfig.items) {
                 OwnerDashboardView()
@@ -48,6 +48,8 @@ extension AppEntryView {
             DashboardContainer(menuItems: PlantHeadMenuConfig.items) {
                 PHDashboardView()
             }
+        case .unknown:
+            LoginView()
         case .none:
             LoginView()
         }

@@ -4,18 +4,21 @@ import Foundation
 final class FactorySessionManager {
     static let shared = FactorySessionManager()
     
-    private init() { Task { await loadPHFactories() } }
+    private init() {}
     
     var factories: [LoadPHFactoryResponseData] = []
     var selectedFactoryID: Int?
-
+    var isLoading = false
     var alertMessage: String?
     var showAlert = false
 
-    // TODO: Pass plantheadID after login
-    func loadPHFactories() async {
+    func loadPHFactories(plantHeadID: Int) async {
+        isLoading = true
+        defer {
+            isLoading = false
+        }
         do {
-            let response = try await PlantHeadRootService.shared.loadPHFactories(request: LoadPHFactoryRequest(plantHeadID: 12))
+            let response = try await PlantHeadRootService.shared.loadPHFactories(request: LoadPHFactoryRequest(plantHeadID: plantHeadID))
             if response.success {
                 factories = response.data
             } else {

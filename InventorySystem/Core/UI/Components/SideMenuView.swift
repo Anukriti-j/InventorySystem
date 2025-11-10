@@ -9,12 +9,12 @@ struct SideMenuView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 25) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(manager.name ?? "Unknown")
+                    Text(manager.user?.userName ?? "Unknown")
                         .font(.title.bold())
-                    Text(manager.email ?? "Not found")
+                    Text(manager.user?.email ?? "Not found")
                         .font(.caption)
                         .foregroundStyle(Color.secondaryText)
-                    Text(manager.userRole?.rawValue.capitalized ?? "Unknown")
+                    Text(manager.user?.userRole.rawValue.capitalized ?? "Unknown")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                 }

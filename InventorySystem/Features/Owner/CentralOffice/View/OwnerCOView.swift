@@ -1,49 +1,36 @@
 import SwiftUI
 
 struct OwnerCOView: View {
-    @State private var viewModel = OwnerPHListViewModel()
+    @StateObject private var viewModel = OwnerCOViewModel()
     
     var body: some View {
         NavigationStack {
             VStack {
-                FilterSortBar(showFilterSheet: $viewModel.showFilterSheet, showSortSheet: $viewModel.showSortSheet)
-                
                 List {
-                    ForEach(["CO 1", "CO 2", "CO 3", "CO 4"], id: \.self) { name in
-                        Text(name)
-                    }
+                    Text("Central officer names")
                 }
-                .listStyle(.insetGrouped)
-                .searchable(text: $viewModel.searchText, prompt: "Search Central Officer")
+                .listStyle(.plain)
             }
-            .navigationTitle("Central Office")
+            .navigationTitle("Central Officers")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showAddSheet = true
                     } label: {
                         Text("Add +")
-                            .fontWeight(.bold)
+                            .fontWeight(.semibold)
                     }
                 }
             }
-            .sheet(isPresented: $viewModel.showFilterSheet) {
-                FilterListSheetView(filters: [
-                    "Location" : ["Pune", "Mumbai", "Delhi"]
-                ])
-            }
-            .sheet(isPresented: $viewModel.showSortSheet) {
-                SortListSheetView(sortOptions: [
-                    "Alphabetically A-Z"
-                ])
-            }
-            .sheet(isPresented: $viewModel.showAddSheet) {
-                AddCentralOfficerView()
-            }
         }
+        .sheet(isPresented: $viewModel.showAddSheet) {
+            AddCentralOfficerView()
+        }   
     }
 }
 
-#Preview {
+
+#Preview("Officers List") {
     OwnerCOView()
 }

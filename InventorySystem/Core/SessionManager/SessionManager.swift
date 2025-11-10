@@ -3,19 +3,20 @@ import SwiftUI
 
 @Observable
 final class SessionManager {
-    var isLoggedIn: Bool = true
-    var userRole: UserRole? = .plantHead
-    var name: String?
-    var email: String?
+    var isLoggedIn: Bool = false
+    var user: LoggedInUser?
     var selectedScreen: AnyView? = nil
     var selectedMenuID: UUID? = nil
     
-    func setUpUserSession(as role: UserRole, name: String, email: String) {
-        self.userRole = role
+    func setUpUserSession(user: LoggedInUser) {
         self.isLoggedIn = true
-        self.selectedScreen = nil
-        self.name = name
-        self.email = email
+        self.user = LoggedInUser(
+            id: user.id,
+            userName: user.userName,
+            email: user.email,
+            userRole: user.userRole
+        )
+        
     }
     
     // MARK: - LOGOUT

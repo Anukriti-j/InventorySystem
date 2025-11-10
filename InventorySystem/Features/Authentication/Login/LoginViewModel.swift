@@ -7,8 +7,16 @@ enum Field {
 @Observable
 class LoginViewModel {
     var response: LoginResponse?
-    var email: String = ""
-    var password: String = ""
+    var email: String = "" {
+        didSet {
+            validateEmail()
+        }
+    }
+    var password: String = "" {
+        didSet {
+            validatePassword()
+        }
+    }
     var shouldFocusField: Field?
     var emailError: String? = nil
     var passwordError: String? = nil
@@ -16,39 +24,50 @@ class LoginViewModel {
     var showAlert: Bool = false
     var isLoading: Bool = false
     
-    func handleLogin(sessionManager: SessionManager) async {
-        emailError = nil
-        passwordError = nil
-        alertMessage = nil
-        showAlert = false
-        isLoading = true
-        
-        defer {
-            isLoading = false
+    var isFormValid: Bool {
+        if validateEmail() && validatePassword() {
+            return true
+        } else {
+            return false
         }
-        
+    }
+    
+    func validateEmail() -> Bool {
         if email.isEmpty {
             shouldFocusField = .email
             emailError = ErrorMessages.requiredEmail.errorDescription
-            return
+            return false
         }
-        
+        else if !email.isEmail {
+            shouldFocusField = .email
+            emailError = ErrorMessages.invalidEmail.errorDescription
+            return false
+        }
+        emailError = nil
+        return true
+    }
+    
+    func validatePassword() -> Bool {
         if password.isEmpty {
             shouldFocusField = .password
             passwordError = ErrorMessages.requiredPassword.errorDescription
-            return
+            return false
         }
-        
-        if !email.isEmail {
-            shouldFocusField = .email
-            emailError = ErrorMessages.invalidEmail.errorDescription
-            return
-        }
-        
-        if !password.isPassword {
+        else if !password.isPassword {
             shouldFocusField = .password
             passwordError = ErrorMessages.invalidPassword.errorDescription
-            return
+            return false
+        }
+        passwordError = nil
+        return true
+    }
+    
+    // MARK: Alert messages are not showing properly
+    func handleLogin(sessionManager: SessionManager) async {
+        isLoading = true
+        defer {
+            isLoading = false
+            resetForm() // MARK: check if this is right
         }
         
         do {
@@ -60,26 +79,35 @@ class LoginViewModel {
                 KeychainManager.shared.save(token: token)
             }
             
-            if let roleString = response?.data.role,
-               let role = UserRole(rawValue: roleString) {
+            if let data = response?.data {
+                let role = UserRole(rawValue: data.role) ?? .unknown
                 sessionManager.setUpUserSession(
-                    as: role,
-                    name: response?.data.username ?? "Unknown",
-                    email: response?.data.email ?? "Not found"
+                    user: LoggedInUser(
+                        id: data.id,
+                        userName: data.username,
+                        email: data.email,
+                        userRole: role
+                    )
                 )
             } else {
-                alertMessage = ErrorMessages.notRecognized.errorDescription
-                showAlert = true
+                print(response?.message)
+                showAlert(with: ErrorMessages.notRecognized.errorDescription)
             }
-            
         } catch let apiError as APIError {
-            alertMessage = apiError.errorDescription
-            showAlert = true
+            showAlert(with: apiError.errorDescription)
             
         } catch {
-            alertMessage = ErrorMessages.unknownError.errorDescription
-            showAlert = true
+            showAlert(with: ErrorMessages.unknownError.errorDescription)
         }
     }
     
+    private func showAlert(with message: String?) {
+        alertMessage = message
+        showAlert = true
+    }
+    
+    private func resetForm() {
+        emailError = nil
+        passwordError = nil
+    }
 }

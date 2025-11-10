@@ -57,14 +57,19 @@ final class AddSupervisorViewModel {
         let request = CreateChiefRequest(name: name, email: email, factoryID: factoryID)
         do {
             createChiefResponse = try await PHPersonnelService.shared.addChiefSupervisor(request: request)
-            alertMessage = createChiefResponse?.message
             if createChiefResponse?.success == true {
                 success = true
             }
-            showAlert = true
+            if let message = createChiefResponse?.message {
+                showAlert(with: message)
+            }
         } catch {
-            alertMessage = "Cannot create chief supervisor: \(error.localizedDescription)"
-            showAlert = true
+            showAlert(with: "Cannot create chief supervisor: \(error.localizedDescription)")
         }
+    }
+    
+    private func showAlert(with message: String) {
+        alertMessage = message
+        showAlert = true
     }
 }

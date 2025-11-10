@@ -1,12 +1,26 @@
 import SwiftUI
 
 struct FilterListSheetView: View {
-    let filters: [String: [String]]          // ["Location": [...], "Category": [...]]
+    @Environment(\.dismiss) private var dismiss
+
+    let filters: [String: [String]]                // ["Location": ["Pune", "Mumbai"], "Status": ["Active", "Inactive"]]
     @State private var selectedFilter: String?
-    @State private var selections: [String: Set<String>] = [:]
+    @State private var selections: [String: Set<String>]
     
     var onApply: (([String: Set<String>]) -> Void)?
     
+    // MARK: - Initializer supports preselected filters
+    init(
+        filters: [String: [String]],
+        preselected: [String: Set<String>] = [:],
+        onApply: (([String: Set<String>]) -> Void)? = nil
+    ) {
+        self.filters = filters
+        self._selections = State(initialValue: preselected)
+        self.onApply = onApply
+    }
+    
+    // MARK: - Body
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
@@ -62,7 +76,6 @@ extension FilterListSheetView {
     private var filterValuesView: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let filter = selectedFilter, let values = filters[filter] {
-                
                 Text(filter).font(.headline)
                 Divider()
                 
@@ -102,7 +115,9 @@ extension FilterListSheetView {
     private var footerButtons: some View {
         HStack {
             Button("Clear All") {
-                selections = [:]
+                selections = filters.keys.reduce(into: [:]) { dict, key in
+                    dict[key] = []
+                }
             }
             .foregroundColor(.red)
             
@@ -110,6 +125,7 @@ extension FilterListSheetView {
             
             Button("Apply") {
                 onApply?(selections)
+                dismiss()
             }
             .font(.headline)
         }
@@ -121,8 +137,11 @@ extension FilterListSheetView {
 extension FilterListSheetView {
     
     private func initializeSelections() {
-        selections = filters.keys.reduce(into: [:]) { dict, key in
-            dict[key] = []
+        // Only initialize missing keys (preserves preselected)
+        for key in filters.keys {
+            if selections[key] == nil {
+                selections[key] = []
+            }
         }
     }
     
@@ -134,7 +153,6 @@ extension FilterListSheetView {
         } else {
             set.insert(value)
         }
-        
         selections[filter] = set
     }
     
@@ -150,6 +168,7 @@ extension FilterListSheetView {
             "Category": ["IT", "Banking", "Design"],
             "Experience": ["Fresher", "1-3 Years", "3-5 Years", "5+ Years"]
         ],
+        preselected: ["Location": ["Pune"], "Category": ["IT"]],
         onApply: { selected in
             print("Selected filters:", selected)
         }

@@ -6,55 +6,72 @@ final class AddFactoryViewModel {
     var city: String = ""
     var address: String = ""
     var plantHeadID: Int?
+    
     var createFactoryResponse: CreateFactoryResponse?
-    var getAllPHResponse: GetAllPlantHeads?
-    var plantHeadsList: [GetAllPlantHeadData]?
+    var plantHeadsList: [GetAllPlantHeadData] = []
+    
     var showAlert: Bool = false
     var alertMessage: String?
     var success: Bool = false
+    var isFetchingPlantHeads = false
+    var isSavingFactory = false
     
-    
-    // Mock data – replace with API values
-    let plantHeads: [(id: Int, name: String)] = [
-        (1, "John Doe"),
-        (2, "Amit Sharma"),
-        (3, "Priya Nair"),
-        (4, "David Wilson")
-    ]
+    var activePlantHeads: [GetAllPlantHeadData] {
+        plantHeadsList.filter { $0.isActive == "YES" }
+    }
     
     var isFormValid: Bool {
         !name.isEmpty && !city.isEmpty && !address.isEmpty
     }
     
-    func getAllPlantHeads() async throws {
-//        do {
-//            getAllPHResponse = try await OwnerFactoryService.shared.getAllPlantHeads()
-//            if getAllPHResponse.success {
-//                plantHeadsList = getAllPHResponse.data
-//            } else {
-//                plantHeadsList = [GetAllPlantHeadData(plantheadID: 0, username: "No plant Head Found", isActive: "No")]
-//            }
-//        } catch {
-//            alertMessage = "Failed to fetch factories: \(error.localizedDescription)"
-//            showAlert = true
-//        }
-    }
-   
-    //MARK: Change planthead id, get planthead
-    func createFactory() async {
+    func getAllPlantHeads() async {
+        isFetchingPlantHeads = true
+        defer { isFetchingPlantHeads = false }
         do {
-            createFactoryResponse = try await OwnerFactoryService.shared.createFactory(request: CreateFactoryRequest(name: name, city: city, address: address, plantHeadID: 1))
-            alertMessage = createFactoryResponse?.message
-            if let success = createFactoryResponse?.success {
-                self.success = true
+            let response = try await OwnerFactoryService.shared.getAllPlantHeads()
+            if response.success, !response.data.isEmpty {
+                plantHeadsList = response.data
+            } else {
+                plantHeadsList = [GetAllPlantHeadData(id: 0, username: "No Plant Head Found", isActive: "No")]
             }
-            print(createFactoryResponse?.message)
-            showAlert = true
         } catch {
-            print(error)
+            showAlert(with: "Failed to fetch plant heads: \(error.localizedDescription)")
         }
+    }
+    
+    func createFactory() async {
+        isSavingFactory = true
+        defer { isSavingFactory = false }
+        let request = CreateFactoryRequest(
+            name: name,
+            city: city,
+            address: address,
+            plantHeadID: plantHeadID ?? 0
+        )
+        
+        do {
+            let response = try await OwnerFactoryService.shared.createFactory(request: request)
+            alertMessage = createFactoryResponse?.message
+            success = response.success
+            showAlert(with: response.message)
+            
+            if success {
+                resetForm()
+            }
+        } catch {
+            showAlert(with: "Failed to create factory: \(error.localizedDescription)")
+        }
+    }
+    
+    private func resetForm() {
         name = ""
         city = ""
         address = ""
+        plantHeadID = nil
+    }
+    
+    private func showAlert(with message: String?) {
+        alertMessage = message
+        showAlert = true
     }
 }

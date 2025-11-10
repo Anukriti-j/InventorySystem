@@ -13,7 +13,6 @@ struct SignUpView: View {
             VStack(alignment: .leading, spacing: 8) {
                 InputField(
                     label: "Name",
-                    systemImage: "person.fill",
                     text: $viewModel.name,
                     focusedField: $focusedField,
                     field: Field.name
@@ -29,7 +28,6 @@ struct SignUpView: View {
             VStack(alignment: .leading, spacing: 8) {
                 InputField(
                     label: "Email",
-                    systemImage: "envelope.fill",
                     text: $viewModel.email,
                     focusedField: $focusedField,
                     field: Field.email
@@ -45,7 +43,6 @@ struct SignUpView: View {
             VStack(alignment: .leading, spacing: 8) {
                 SecureInputField(
                     label: "Password",
-                    systemImage: "lock.fill",
                     text: $viewModel.password,
                     focusedField: $focusedField,
                     field: Field.password

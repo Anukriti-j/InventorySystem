@@ -15,7 +15,6 @@ struct LoginView: View {
             VStack(alignment: .leading, spacing: 8) {
                 InputField(
                     label: "Email",
-                    systemImage: "envelope.fill",
                     text: $viewModel.email,
                     focusedField: $focusedField,
                     field: Field.email
@@ -31,7 +30,6 @@ struct LoginView: View {
             VStack(alignment: .leading, spacing: 8) {
                 SecureInputField(
                     label: "Password",
-                    systemImage: "lock.fill",
                     text: $viewModel.password,
                     focusedField: $focusedField,
                     field: Field.password
@@ -45,8 +43,10 @@ struct LoginView: View {
             }
             
             Button {
-                Task {
-                    await viewModel.handleLogin(sessionManager: sessionManager)
+                if viewModel.isFormValid {
+                    Task {
+                        await viewModel.handleLogin(sessionManager: sessionManager)
+                    }
                 }
                 
             } label: {
@@ -83,7 +83,6 @@ struct LoginView: View {
 
 struct InputField: View {
     let label: String
-    let systemImage: String
     @Binding var text: String
     @FocusState.Binding var focusedField: Field?
     let field: Field
@@ -92,13 +91,9 @@ struct InputField: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Color(red: 0.5, green: 0.5, blue: 0.6))
+                .foregroundColor(.secondaryText)
             
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.8))
-                    .frame(width: 20)
-                
+            VStack(spacing: 12) {
                 TextField("Enter \(label.lowercased())", text: $text)
                     .focused($focusedField, equals: field)
                     .textInputAutocapitalization(.never)
@@ -125,7 +120,6 @@ struct InputField: View {
 
 struct SecureInputField: View {
     let label: String
-    let systemImage: String
     @Binding var text: String
     @FocusState.Binding var focusedField: Field?
     let field: Field
@@ -135,13 +129,9 @@ struct SecureInputField: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.primary)
+                .foregroundColor(.secondaryText)
             
             HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .foregroundColor(.primary)
-                    .frame(width: 20)
-                
                 Group {
                     if isSecure {
                         SecureField("Enter your \(label.lowercased())", text: $text)
@@ -177,5 +167,5 @@ struct SecureInputField: View {
 
 
 #Preview {
-    LoginView()
+    LoginView() 
 }

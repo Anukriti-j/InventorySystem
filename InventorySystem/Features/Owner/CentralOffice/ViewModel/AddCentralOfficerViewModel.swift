@@ -1,50 +1,86 @@
 import Foundation
 
-@Observable
-class AddCentralOfficerViewModel {
-    
-    var name: String = ""
-    var email: String = ""
-    var success: Bool = false
-    var response: CreatePHResponse?
-    
-    var nameError: String?
-    var emailError: String?
-    
-    var alertMessage: String?
-    var showAlert: Bool = false
-    
+@MainActor
+final class AddCentralOfficerViewModel: ObservableObject {
+    @Published var name: String = "" {
+        didSet {
+            _ = validateName()
+        }
+    }
+    @Published var email: String = "" {
+        didSet {
+            _ = validateEmail()
+        }
+    }
+    @Published var isLoading = false
+
+    @Published var nameError: String?
+    @Published var emailError: String?
+
+    @Published var showAlert: Bool = false
+    @Published var alertMessage: String?
+    @Published var success: Bool = false
+
     var isFormValid: Bool {
-        guard !name.isEmpty && !email.isEmpty else {
+        nameError == nil && emailError == nil && !name.isEmpty && !email.isEmpty
+    }
+
+    @MainActor
+    func validateName() -> Bool {
+        if name.trimmingCharacters(in: .whitespaces).isEmpty {
             nameError = ErrorMessages.requiredField.errorDescription
             return false
         }
-        guard email.isEmail else {
+        nameError = nil
+        return true
+    }
+
+    func validateEmail() -> Bool {
+        let trimmed = email.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty {
+            emailError = ErrorMessages.requiredEmail.errorDescription
+            return false
+        } else if !trimmed.isEmail {
             emailError = ErrorMessages.invalidEmail.errorDescription
             return false
         }
+        emailError = nil
         return true
     }
-    
-    //MARK: remove print statements
+
+    @MainActor
     func createCentralOfficer() async {
-        print("created central officer call")
+        guard validateName(), validateEmail() else { return }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        let request = CreateCORequest(name: name, email: email)
+
         do {
-            response = try await OwnerPHService.shared.createPlantHead(
-                request: CreatePHRequest(
-                    username: name,
-                    email: email,
-                    factoryID: 1
-                )
-            )
-             print("create CO response: \(response)")
-            alertMessage = response?.message
-            showAlert = true
-            success = true
+            let response = try await OwnerCentralOfficeService.shared.createCentralOfficer(request: request)
+            success = response.success
+            showAlert(with: response.message)
+
+            if success {
+                resetForm()
+            }
+        } catch let error as APIError {
+            showAlert(with: "Failed to create central officer: \(error.localizedDescription)")
         } catch {
-            success = false
-            alertMessage = response?.message
-            showAlert = true
+            showAlert(with: "Failed to create central officer: \(error.localizedDescription)")
         }
+    }
+
+    private func resetForm() {
+        name = ""
+        email = ""
+        nameError = nil
+        emailError = nil
+    }
+
+    private func showAlert(with message: String?) {
+        alertMessage = message
+        showAlert = true
     }
 }

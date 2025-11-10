@@ -1,7 +1,20 @@
 import Foundation
 
-final class OwnerFactoryService {
+protocol FactoryServiceProtocol {
+    func fetchFactories(
+        page: Int,
+        size: Int,
+        sortBy: String?,
+        sortDirection: String?,
+        search: String?,
+        status: String?
+    ) async throws -> GetAllFactories
+}
+
+
+final class OwnerFactoryService: FactoryServiceProtocol {
     static let shared = OwnerFactoryService()
+    private let pathBuilder = APIPathBuilder()
     
     private init() {}
     
@@ -23,5 +36,41 @@ final class OwnerFactoryService {
             requiresAuth: true
         )
         return try await APIClient.shared.request(endpoint: endpoint, responseType: GetAllPlantHeads.self)
+    }
+    
+    func fetchFactories(
+        page: Int,
+        size: Int,
+        sortBy: String?,
+        sortDirection: String?,
+        search: String?,
+        status: String?
+    ) async throws -> GetAllFactories {
+        let path = pathBuilder.buildPath(
+            "/owner/factories",
+            queryItems: [
+                "page": "\(page)",
+                "size": "\(size)",
+                "sortBy": sortBy,
+                "sortDirection": sortDirection,
+                "search": search,
+                "status": status
+            ]
+        )
+        let endpoint = APIEndpoint(
+            path: path,
+            method: .get,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: GetAllFactories.self)
+    }
+    
+    func deleteFactory(factoryID: Int) async throws -> DeleteFactoryResponse {
+        let endpoint = APIEndpoint(
+            path: "\(APIConstants.baseURL)/owner/factories/\(factoryID)/delete",
+            method: .delete,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: DeleteFactoryResponse.self)
     }
 }

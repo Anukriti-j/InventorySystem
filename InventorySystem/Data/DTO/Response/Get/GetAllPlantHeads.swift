@@ -6,12 +6,12 @@ struct GetAllPlantHeads: Codable {
     let data: [GetAllPlantHeadData]
 }
 
-struct GetAllPlantHeadData: Codable {
-    let plantheadID: Int
+struct GetAllPlantHeadData: Codable, Identifiable {
+    let id: Int
     let username, isActive: String
 
     enum CodingKeys: String, CodingKey {
-        case plantheadID = "plantheadId"
+        case id = "plantheadId"
         case username, isActive
     }
 }
