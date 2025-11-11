@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SortListSheetView: View {
+    @Environment(\.dismiss) var dismiss
     let sortOptions: [String]
     @State private var selectedSort: String? = nil
     
@@ -60,6 +61,7 @@ extension SortListSheetView {
             
             Button("Apply") {
                 onApply?(selectedSort)
+                dismiss()
             }
             .font(.headline)
         }

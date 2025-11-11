@@ -115,9 +115,7 @@ extension FilterListSheetView {
     private var footerButtons: some View {
         HStack {
             Button("Clear All") {
-                selections = filters.keys.reduce(into: [:]) { dict, key in
-                    dict[key] = []
-                }
+                selections.removeAll()
             }
             .foregroundColor(.red)
             

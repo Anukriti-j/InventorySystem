@@ -6,7 +6,8 @@ struct FactoryInfoCardView: View {
     let factoryID: Int
     let factoryName: String
     let location: String?
-    let infoRows: [InfoRow]
+    let status: String
+    let infoRows: [FactoryInfoRow]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -52,14 +53,13 @@ struct FactoryInfoCardView: View {
             }
             HStack {
                 // MARK: fetch status from API
-                let isActive = true
                 Text("Status")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.gray)
                 Spacer()
-                Text("")
+                Text(status)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(isActive ? .green : .red)
+                    .foregroundColor(status == "ACTIVE" ? .green : .red)
             }
         }
         .padding(16)

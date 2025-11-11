@@ -27,88 +27,69 @@ final class OwnerFactoryViewModel {
     var showAlert = false
     var alertMessage: String?
     
-    let plantHeads: [(id: Int, name: String)] = [
-        (1, "John Doe"),
-        (2, "Amit Sharma"),
-        (3, "Priya Nair"),
-        (4, "David Wilson")
-    ]
-    
-    // MARK: - Search debounce
-    private var searchTask: Task<Void, Never>? = nil
+    private var debounceTask: Task<Void, Never>? = nil
     private let pageSize = 10
     
     // MARK: - Public API
     
-    func fetchFactories(
-        reset: Bool = false
-    ) async {
+    func fetchFactories(reset: Bool = false) async {
         // prevent concurrent fetches
-        guard !isLoading else { return }
-        
-        if reset {
-            factories = []
-            currentPage = 0
-        } else {
-            // If no more pages, stop
-            if currentPage >= totalPages {
-                return
-            }
+        guard !isLoading else {
+            print("⏳ Skipping fetch — already loading")
+            return
         }
         
         isLoading = true
         defer { isLoading = false }
         
+        if reset {
+            factories = []
+            currentPage = 0
+        } else {
+            guard currentPage < totalPages else { return }
+        }
+        
         do {
-            // Extract filter params
-            // Convert sets to comma-separated strings if backend expects comma-separated values
-            // Normalize filters before sending to API
-            let locationParam = (appliedFilters["Location"] ?? [])
-                .map { $0.capitalized } // optional normalization for cities
-                .joined(separator: ",")
+            let locationParam: String? = {
+                let locs = (appliedFilters["Location"] ?? [])
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).capitalized }
+                return locs.isEmpty ? nil : locs.joined(separator: ",")
+            }()
+
+            let statusParam: String? = {
+                let statuses = (appliedFilters["Status"] ?? [])
+                    .map { $0.uppercased() }
+                return statuses.isEmpty ? nil : statuses.joined(separator: ",")
+            }()
             
-            let statusParam = (appliedFilters["Status"] ?? [])
-                .map {
-                    switch $0.lowercased() {
-                    case "active": return "ACTIVE"
-                    case "inactive": return "INACTIVE"
-                    default: return $0.uppercased()
-                    }
-                }
-                .joined(separator: ",")
-            
-            // Map selectedSort to backend fields
             let (sortByParam, sortDirectionParam) = mapSortToParams(selectedSort)
-            
-            // searchText: use nil if empty
             let searchParam = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : searchText
             
-            // Call service (page is currentPage)
             let response = try await OwnerFactoryService.shared.fetchFactories(
                 page: currentPage,
                 size: pageSize,
                 sortBy: sortByParam,
                 sortDirection: sortDirectionParam,
                 search: searchParam,
-                status: statusParam.isEmpty ? nil : statusParam
+                status: statusParam,
+                location: locationParam
             )
-            totalPages = response.pagination.totalPages
             
-            // Append data and increment page
-            // Use reassignment to ensure UI updates
+            totalPages = response.pagination.totalPages
             let newItems = response.data
+            
             if reset {
                 factories = newItems
                 currentPage = 1
             } else {
-                factories = factories + newItems
+                factories += newItems
                 currentPage += 1
             }
-            
         } catch {
             showAlert(with: "Cannot fetch factories: \(error.localizedDescription)")
         }
     }
+    
     
     /// Called when user scrolls near bottom. Safely triggers next page if available.
     func loadNextPageIfNeeded(currentItem: Factory?) async {
@@ -120,10 +101,15 @@ final class OwnerFactoryViewModel {
         await fetchFactories()
     }
     
-    /// Apply new filters and reload from first page
     func applyFilters(_ filters: [String: Set<String>]) async {
-        appliedFilters = filters
-        await fetchFactories(reset: true)
+        debounceTask?.cancel()
+        appliedFilters = filters.filter { !$0.value.isEmpty }
+
+        debounceTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 300 * 1_000_000) // 0.3s
+            guard !Task.isCancelled else { return }
+            await self?.fetchFactories(reset: true)
+        }
     }
     
     /// Apply a sort option (UI string), reload
@@ -134,11 +120,11 @@ final class OwnerFactoryViewModel {
     
     /// Called from view when search text changes — debounced
     func updateSearchText(_ newText: String) {
-        searchTask?.cancel()
+        debounceTask?.cancel()
         searchText = newText
         
         // Debounce 300ms
-        searchTask = Task { [weak self] in
+        debounceTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 300 * 1_000_000) // 300ms
             guard !Task.isCancelled else { return }
             await self?.fetchFactories(reset: true)
@@ -150,14 +136,18 @@ final class OwnerFactoryViewModel {
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
-        case "Newest First":
-            return ("createdAt", "desc")
-        case "Oldest First":
-            return ("createdAt", "asc")
-        case "Production High → Low":
-            return ("production", "desc")
-        case "Production Low → High":
-            return ("production", "asc")
+            //        case "Production High → Low":
+            //            return ("production", "desc")
+            //        case "Production Low → High":
+            //            return ("production", "asc")
+        case "Sort by Name A-Z":
+            return ("name", "asc")
+        case "Sort by Name Z-A":
+            return ("name", "desc")
+        case "Sort by City A-Z":
+            return ("city", "asc")
+        case "Sort by City Z-A":
+            return ("city", "desc")
         default:
             return (nil, nil)
         }
@@ -182,7 +172,7 @@ final class OwnerFactoryViewModel {
         await deleteFactory(id: id)
         cancelDelete()
     }
-
+    
     func deleteFactory(id: Int) async {
         factories.removeAll { $0.id == id }
         print("deleted factory called")

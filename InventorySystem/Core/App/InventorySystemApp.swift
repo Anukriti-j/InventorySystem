@@ -15,3 +15,4 @@ struct InventorySystemApp: App {
 // PHPersonnelView - check if add supervisor button is appearing only when no supervisor is get and gettin supervisor correctly
 // define protocols for services
 // failed to create central officer
+// get all factories not working - backend error

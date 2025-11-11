@@ -1,18 +1,19 @@
 import SwiftUI
 
-struct OwnerFactoryView: View {
-    @State private var viewModel = OwnerFactoryViewModel()
+struct OwnerToolsListView: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var viewModel = OwnerToolsViewModel()
     
     var body: some View {
         NavigationStack {
             VStack {
                 filterAndSortBar
-                factoryList
+                toolList
             }
-            .navigationTitle("Factories")
+            .navigationTitle("Tools")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { addFactoryToolbar }
-            .task { await loadInitialData() } // Fetch initial data
+            .toolbar { addToolToolbar }
+            .task { await loadInitialData() }
             
             // Delete confirmation alert
             .alert("Alert", isPresented: $viewModel.showDeletePopUp) {
@@ -21,20 +22,15 @@ struct OwnerFactoryView: View {
                     Task { await viewModel.confirmDelete() }
                 }
             } message: {
-                Text("Are you sure you want to delete the selection!")
-            }
-            
-            // Navigation to detail screen
-            .navigationDestination(isPresented: $viewModel.showFactoryDetail) {
-                OwnerFactoryDetailView()
+                Text("Are you sure you want to delete the selected tool?")
             }
         }
         // Filter sheet
-        .sheet(isPresented: $viewModel.showfilterSheet) {
+        .sheet(isPresented: $viewModel.showFilterSheet) {
             FilterListSheetView(
                 filters: [
                     "Location": ["Pune", "Mumbai", "Delhi"],
-                    "Status": ["Active", "Inactive"]
+                    "Status": ["Available", "In Use", "Maintenance"]
                 ],
                 preselected: viewModel.appliedFilters
             ) { selected in
@@ -48,44 +44,43 @@ struct OwnerFactoryView: View {
                 sortOptions: [
                     "Sort by Name A-Z",
                     "Sort by Name Z-A",
-                    "Sort by City A-Z",
-                    "Sort by City Z-A"
+                    "Sort by Factory A-Z",
+                    "Sort by Factory Z-A"
                 ]
             ) { chosenSort in
                 Task { await viewModel.applySort(chosenSort) }
             }
         }
         
-        // Add factory sheet
         .sheet(isPresented: $viewModel.showAddSheet) {
-            AddFactoryView()
+            AddToolView()
         }
     }
 }
 
-extension OwnerFactoryView {
+extension OwnerToolsListView {
     
     // MARK: - UI Components
     
     private var filterAndSortBar: some View {
         FilterSortBar(
-            showFilterSheet: $viewModel.showfilterSheet,
+            showFilterSheet: $viewModel.showFilterSheet,
             showSortSheet: $viewModel.showSortSheet
         )
         .padding(.horizontal, 8)
     }
     
-    private var factoryList: some View {
+    private var toolList: some View {
         ZStack {
-            if viewModel.isLoading && viewModel.factories.isEmpty {
-                ProgressView("Loading factories...")
+            if viewModel.isLoading && viewModel.tools.isEmpty {
+                ProgressView("Loading tools...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if viewModel.factories.isEmpty {
+            } else if viewModel.tools.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "building.2.slash")
+                    Image(systemName: "gear")
                         .font(.system(size: 50))
                         .foregroundColor(.gray)
-                    Text("No factories found")
+                    Text("No tools found")
                         .font(.headline)
                         .foregroundColor(.secondary)
                     Text("Try adjusting your filters or search criteria.")
@@ -95,39 +90,28 @@ extension OwnerFactoryView {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(viewModel.factories) { factory in
+                    ForEach(viewModel.tools) { tool in
                         Button {
-                            viewModel.showFactoryDetail = true
+                            viewModel.showToolDetail = true
                         } label: {
-                            FactoryInfoCardView(
+                            ToolInfoCardView(
                                 viewModel: viewModel,
-                                factoryID: factory.id,
-                                factoryName: factory.factoryName,
-                                location: factory.location,
-                                status: factory.status,
-                                infoRows: [
-                                    FactoryInfoRow(label: "Plant Head:", value: factory.plantHeadName),
-                                    FactoryInfoRow(label: "Chief Supervisor", value: factory.chiefSupervisorName),
-                                    FactoryInfoRow(label: "Total Products:", value: "\(factory.totalProducts)"),
-                                    FactoryInfoRow(label: "Total Workers:", value: "\(factory.totalWorkers)"),
-                                    FactoryInfoRow(label: "Total Tools:", value: "\(factory.totalTools)")
-                                ]
+                                tool: tool
                             )
                         }
                         .listRowSeparator(.hidden)
                         .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .task {
-                            await viewModel.loadNextPageIfNeeded(currentItem: factory)
+                            await viewModel.loadNextPageIfNeeded(currentItem: tool)
                         }
                     }
                     
-                    // Bottom loading or “all loaded” messages
-                    if viewModel.isLoading && !viewModel.factories.isEmpty && viewModel.currentPage < viewModel.totalPages {
+                    if viewModel.isLoading && !viewModel.tools.isEmpty && viewModel.currentPage < viewModel.totalPages {
                         ProgressView("Loading more…")
                             .frame(maxWidth: .infinity)
                             .listRowSeparator(.hidden)
-                    } else if !viewModel.isLoading && !viewModel.factories.isEmpty && viewModel.currentPage >= viewModel.totalPages {
-                        Text("All factories loaded")
+                    } else if !viewModel.isLoading && viewModel.currentPage >= viewModel.totalPages {
+                        Text("All tools loaded")
                             .font(.footnote)
                             .foregroundColor(.gray)
                             .frame(maxWidth: .infinity)
@@ -136,16 +120,19 @@ extension OwnerFactoryView {
                 }
                 .listStyle(.plain)
                 .refreshable {
-                    Task {
-                        await viewModel.fetchFactories(reset: true)
-                    }
+                    Task { await viewModel.fetchTools(reset: true) }
                 }
+            }
+        }
+        .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
+            Button("OK") {
+                dismiss()
             }
         }
         .searchable(text: $viewModel.searchText)
     }
     
-    private var addFactoryToolbar: some ToolbarContent {
+    private var addToolToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 viewModel.showAddSheet = true
@@ -156,17 +143,8 @@ extension OwnerFactoryView {
         }
     }
     
-    // MARK: - Actions
-    
     private func loadInitialData() async {
-        await viewModel.fetchFactories(reset: true)
+        await viewModel.fetchTools(reset: true)
     }
 }
 
-// MARK: - Supporting Model
-
-struct FactoryInfoRow: Identifiable {
-    let id = UUID()
-    let label: String
-    let value: String
-}

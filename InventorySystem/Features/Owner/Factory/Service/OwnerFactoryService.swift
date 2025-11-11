@@ -7,7 +7,8 @@ protocol FactoryServiceProtocol {
         sortBy: String?,
         sortDirection: String?,
         search: String?,
-        status: String?
+        status: String?,
+        location: String?
     ) async throws -> GetAllFactories
 }
 
@@ -44,7 +45,8 @@ final class OwnerFactoryService: FactoryServiceProtocol {
         sortBy: String?,
         sortDirection: String?,
         search: String?,
-        status: String?
+        status: String?,
+        location: String?
     ) async throws -> GetAllFactories {
         let path = pathBuilder.buildPath(
             "/owner/factories",
@@ -54,7 +56,8 @@ final class OwnerFactoryService: FactoryServiceProtocol {
                 "sortBy": sortBy,
                 "sortDirection": sortDirection,
                 "search": search,
-                "status": status
+                "status": status,
+                "location": location
             ]
         )
         let endpoint = APIEndpoint(
@@ -72,5 +75,16 @@ final class OwnerFactoryService: FactoryServiceProtocol {
             requiresAuth: true
         )
         return try await APIClient.shared.request(endpoint: endpoint, responseType: DeleteFactoryResponse.self)
+    }
+    
+    func updateFactory(request: UpdateFactoryRequest) async throws -> UpdateFactoryResponse {
+        let data = try JSONEncoder().encode(request)
+        let endpoint = APIEndpoint(
+            path: "\(APIConstants.baseURL)/owner/factory/update",
+            method: .put,
+            body: data,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: UpdateFactoryResponse.self)
     }
 }

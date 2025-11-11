@@ -37,6 +37,7 @@ struct AddFactoryView: View {
         }
         .onAppear(perform: {
             Task {
+                print("on appear get all ph called")
              await viewModel.getAllPlantHeads()
             }
         })

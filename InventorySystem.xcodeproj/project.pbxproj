@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7EEF8D8A2EC32E7E00A3ECA9 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 7EEF8D892EC32E7E00A3ECA9 /* Kingfisher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7E7D44852EB13B1E0034B096 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +33,22 @@
 		7E7D448E2EB13B1E0034B096 /* InventorySystemUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InventorySystemUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7EEF8D9E2EC3529300A3ECA9 /* Exceptions for "InventorySystem" folder in "InventorySystem" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7E7D44762EB13B1A0034B096 /* InventorySystem */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7E7D44792EB13B1A0034B096 /* InventorySystem */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7EEF8D9E2EC3529300A3ECA9 /* Exceptions for "InventorySystem" folder in "InventorySystem" target */,
+			);
 			path = InventorySystem;
 			sourceTree = "<group>";
 		};
@@ -42,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7EEF8D8A2EC32E7E00A3ECA9 /* Kingfisher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,6 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				7E7D44792EB13B1A0034B096 /* InventorySystem */,
+				7EEF8D882EC32E7E00A3ECA9 /* Frameworks */,
 				7E7D44782EB13B1A0034B096 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -78,6 +97,13 @@
 				7E7D448E2EB13B1E0034B096 /* InventorySystemUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7EEF8D882EC32E7E00A3ECA9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -100,6 +126,7 @@
 			);
 			name = InventorySystem;
 			packageProductDependencies = (
+				7EEF8D892EC32E7E00A3ECA9 /* Kingfisher */,
 			);
 			productName = InventorySystem;
 			productReference = 7E7D44772EB13B1A0034B096 /* InventorySystem.app */;
@@ -177,6 +204,9 @@
 			);
 			mainGroup = 7E7D446E2EB13B1A0034B096;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7EEF8D872EC32E6500A3ECA9 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7E7D44782EB13B1A0034B096 /* Products */;
 			projectDirPath = "";
@@ -382,6 +412,8 @@
 				DEVELOPMENT_TEAM = 7GNKAKRCK3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = InventorySystem/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow App to use Photo library";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -410,6 +442,8 @@
 				DEVELOPMENT_TEAM = 7GNKAKRCK3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = InventorySystem/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow App to use Photo library";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -540,6 +574,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7EEF8D872EC32E6500A3ECA9 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.6.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7EEF8D892EC32E7E00A3ECA9 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7EEF8D872EC32E6500A3ECA9 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7E7D446F2EB13B1A0034B096 /* Project object */;
 }

@@ -5,7 +5,6 @@ protocol NetworkingProtocol {
     throws -> T
 }
 
-
 final class APIClient: NetworkingProtocol {
     static let shared = APIClient()
     private init() {}
@@ -32,9 +31,17 @@ final class APIClient: NetworkingProtocol {
         request.httpBody = endpoint.body
         
         request.allHTTPHeaderFields = endpoint.headers ?? [:]
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
+
+        if let customContentType = endpoint.contentType {
+            request.setValue(customContentType, forHTTPHeaderField: "Content-Type")
+        } else {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+
+        if request.value(forHTTPHeaderField: "Accept") == nil {
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+        }
+
         if endpoint.requiresAuth {
             guard let token = KeychainManager.shared.read() else {
                 throw APIError.unauthorized

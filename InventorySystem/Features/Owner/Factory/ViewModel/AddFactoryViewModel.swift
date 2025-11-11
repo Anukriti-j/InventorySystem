@@ -17,7 +17,7 @@ final class AddFactoryViewModel {
     var isSavingFactory = false
     
     var activePlantHeads: [GetAllPlantHeadData] {
-        plantHeadsList.filter { $0.isActive == "YES" }
+        plantHeadsList.filter { $0.isActive == "ACTIVE" }
     }
     
     var isFormValid: Bool {
@@ -26,9 +26,11 @@ final class AddFactoryViewModel {
     
     func getAllPlantHeads() async {
         isFetchingPlantHeads = true
+        print("fetching plant heads")
         defer { isFetchingPlantHeads = false }
         do {
             let response = try await OwnerFactoryService.shared.getAllPlantHeads()
+            print(response)
             if response.success, !response.data.isEmpty {
                 plantHeadsList = response.data
             } else {

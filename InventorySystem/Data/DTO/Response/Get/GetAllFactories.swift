@@ -13,9 +13,12 @@ struct Factory: Codable, Identifiable, Equatable {
     let totalProducts: Int
     let totalTools: Int
     let totalWorkers: Int
+    let status: String
+    let chiefSupervisorName: String
+
 
     enum CodingKeys: String, CodingKey {
         case id = "factoryId"
-        case factoryName, location, plantHeadName, totalProducts, totalTools, totalWorkers
+        case factoryName, location, plantHeadName, totalProducts, totalTools, totalWorkers, status, chiefSupervisorName
     }
 }

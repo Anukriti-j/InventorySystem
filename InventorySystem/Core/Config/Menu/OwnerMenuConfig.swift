@@ -7,7 +7,7 @@ struct OwnerMenuConfig {
         MenuItem(icon: "square.grid.2x2", title: "Dashboard", destination: AnyView(OwnerDashboardView())),
         MenuItem(icon: "building.2.crop.circle", title: "Factories", destination: AnyView(OwnerFactoryView())),
         MenuItem(icon: "cube.box", title: "Products", destination: AnyView(OwnerProductsView())),
-        MenuItem(icon: "wrench.and.screwdriver", title: "Tools", destination: AnyView(OwnerToolsView())),
+        MenuItem(icon: "wrench.and.screwdriver", title: "Tools", destination: AnyView(OwnerToolsListView())),
         MenuItem(icon: "building.columns", title: "Central Office", destination: AnyView(OwnerCOView())),
         MenuItem(icon: "shippingbox.circle", title: "Distributor", destination: AnyView(OwnerDistributorView())),
         MenuItem(icon: "person.crop.circle", title: "Customer", destination: AnyView(OwnerCustomerView())),

@@ -29,25 +29,6 @@ struct OwnerFactoryDetailView: View {
             
             FilterSortBar(showFilterSheet: $showFilterSheet, showSortSheet: $showSortSheet)
             
-            // MARK: Header Section
-            Group {
-                Text("Factory Name")
-                    .font(.title2.bold())
-                
-                Text("Pune")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
-                HStack {
-                    Text("Chief Supervisor")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("Anukriti Jain")
-                        .fontWeight(.semibold)
-                }
-            }
-            .padding(.horizontal)
-            
             Divider()
             
             // MARK: Tab Picker
