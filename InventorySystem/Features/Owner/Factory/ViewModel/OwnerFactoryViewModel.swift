@@ -10,9 +10,9 @@ final class OwnerFactoryViewModel {
     var selectedSort: String? = nil
     var showFactoryDetail: Bool = false
     var showAddSheet: Bool = false
-    var showEditSheet: Bool = false
     var showDeletePopUp: Bool = false
     var factoryIdToDelete: Int? = nil
+    var selectedFactory: Factory?
     
     // MARK: - Data
     var factories: [Factory] = []
@@ -26,14 +26,12 @@ final class OwnerFactoryViewModel {
     // MARK: - Alerts
     var showAlert = false
     var alertMessage: String?
+    var deleteSuccess = false
     
     private var debounceTask: Task<Void, Never>? = nil
     private let pageSize = 10
     
-    // MARK: - Public API
-    
     func fetchFactories(reset: Bool = false) async {
-        // prevent concurrent fetches
         guard !isLoading else {
             print("⏳ Skipping fetch — already loading")
             return
@@ -131,8 +129,6 @@ final class OwnerFactoryViewModel {
         }
     }
     
-    // MARK: - Helpers
-    
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
@@ -178,7 +174,9 @@ final class OwnerFactoryViewModel {
         print("deleted factory called")
         do {
             let response = try await OwnerFactoryService.shared.deleteFactory(factoryID: id)
-            print(response)
+            if response.success {
+                self.deleteSuccess = true
+            }
             showAlert(with: response.message)
         } catch {
             showAlert(with: "Could not delete factory: \(error.localizedDescription)")

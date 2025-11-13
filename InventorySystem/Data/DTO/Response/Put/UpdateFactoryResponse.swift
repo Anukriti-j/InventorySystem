@@ -3,7 +3,7 @@ import Foundation
 struct UpdateFactoryResponse: Codable {
     let success: Bool
     let message: String
-    let data: UpdatedFactoryStatus
+    let data: UpdatedFactoryStatus?
 }
 
 struct UpdatedFactoryStatus: Codable {

@@ -116,6 +116,8 @@ extension FilterListSheetView {
         HStack {
             Button("Clear All") {
                 selections.removeAll()
+                onApply?([:])
+                dismiss()
             }
             .foregroundColor(.red)
             

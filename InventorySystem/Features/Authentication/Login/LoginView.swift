@@ -7,64 +7,66 @@ struct LoginView: View {
     
     
     var body: some View {
-        VStack {
-            Text("Log In")
-                .font(.system(size: 30, weight: .bold))
-                .padding()
-            
-            VStack(alignment: .leading, spacing: 8) {
-                InputField(
-                    label: "Email",
-                    text: $viewModel.email,
-                    focusedField: $focusedField,
-                    field: Field.email
-                )
+        NavigationStack {
+            VStack {
+                Text("Log In")
+                    .font(.system(size: 30, weight: .bold))
+                    .padding()
                 
-                if let error = viewModel.emailError {
-                    Text("\(error)")
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                SecureInputField(
-                    label: "Password",
-                    text: $viewModel.password,
-                    focusedField: $focusedField,
-                    field: Field.password
-                )
-                
-                if let error = viewModel.passwordError {
-                    Text("\(error)")
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                }
-            }
-            
-            Button {
-                if viewModel.isFormValid {
-                    Task {
-                        await viewModel.handleLogin(sessionManager: sessionManager)
+                VStack(alignment: .leading, spacing: 8) {
+                    InputField(
+                        label: "Email",
+                        text: $viewModel.email,
+                        focusedField: $focusedField,
+                        field: Field.email
+                    )
+                    
+                    if let error = viewModel.emailError {
+                        Text("\(error)")
+                            .foregroundStyle(.red)
+                            .font(.caption)
                     }
                 }
                 
-            } label: {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Text("Login")
-                        .foregroundColor(Color.text)
+                VStack(alignment: .leading, spacing: 8) {
+                    SecureInputField(
+                        label: "Password",
+                        text: $viewModel.password,
+                        focusedField: $focusedField,
+                        field: Field.password
+                    )
+                    
+                    if let error = viewModel.passwordError {
+                        Text("\(error)")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
                 }
-            }
-            .customStyle()
-            
-            HStack {
-                Text("Don't have an account? ")
                 
-                NavigationLink("Sign Up") {
-                    SignUpView()
+                Button {
+                    if viewModel.isFormValid {
+                        Task {
+                            await viewModel.handleLogin(sessionManager: sessionManager)
+                        }
+                    }
+                    
+                } label: {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Login")
+                            .foregroundColor(Color.text)
+                    }
+                }
+                .customStyle()
+                
+                HStack {
+                    Text("Don't have an account? ")
+                    
+                    NavigationLink("Sign Up") {
+                        SignUpView()
+                    }
                 }
             }
         }

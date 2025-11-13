@@ -43,7 +43,7 @@ class AddPlantHeadViewModel: ObservableObject {
 
     func getUnassignedFactories() async {
         do {
-            let response = try await OwnerPHService.shared.getUnassignedFactory()
+            let response = try await OwnerPlantHeadService.shared.getUnassignedFactory()
             getFactoryResponse = response
             if response.success {
                 unassignedFactories = response.data
@@ -58,7 +58,7 @@ class AddPlantHeadViewModel: ObservableObject {
     
     func createPlantHead(factoryID: Int) async {
         do {
-            createPHResponse = try await OwnerPHService.shared.createPlantHead(
+            createPHResponse = try await OwnerPlantHeadService.shared.createPlantHead(
                 request: CreatePHRequest(
                     username: name,
                     email: email,

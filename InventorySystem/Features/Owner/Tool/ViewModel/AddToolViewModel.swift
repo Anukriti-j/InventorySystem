@@ -10,7 +10,7 @@ final class AddToolViewModel: ObservableObject {
     @Published var threshold = 0
     @Published var selectedImage: UIImage?
     @Published var selectedCategoryID: Int? = nil
-    @Published var categories: [Category] = []
+    @Published var categories: [ToolCategory] = []
 
     @Published var isAddingNewCategory = false
 

@@ -8,7 +8,7 @@ final class AddFactoryViewModel {
     var plantHeadID: Int?
     
     var createFactoryResponse: CreateFactoryResponse?
-    var plantHeadsList: [GetAllPlantHeadData] = []
+    var plantHeadsList: [PlantHeadData] = []
     
     var showAlert: Bool = false
     var alertMessage: String?
@@ -16,7 +16,7 @@ final class AddFactoryViewModel {
     var isFetchingPlantHeads = false
     var isSavingFactory = false
     
-    var activePlantHeads: [GetAllPlantHeadData] {
+    var activePlantHeads: [PlantHeadData] {
         plantHeadsList.filter { $0.isActive == "ACTIVE" }
     }
     
@@ -34,7 +34,7 @@ final class AddFactoryViewModel {
             if response.success, !response.data.isEmpty {
                 plantHeadsList = response.data
             } else {
-                plantHeadsList = [GetAllPlantHeadData(id: 0, username: "No Plant Head Found", isActive: "No")]
+                plantHeadsList = [PlantHeadData(id: 0, username: "No Plant Head Found", isActive: "No")]
             }
         } catch {
             showAlert(with: "Failed to fetch plant heads: \(error.localizedDescription)")

@@ -3,7 +3,7 @@ import Foundation
 struct CreatePHResponse: Codable {
     let success: Bool
     let message: String
-    let data: CreatedPHData
+    let data: CreatedPHData?
 }
 
 struct CreatedPHData: Codable {

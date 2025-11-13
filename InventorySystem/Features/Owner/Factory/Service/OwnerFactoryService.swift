@@ -30,13 +30,13 @@ final class OwnerFactoryService: FactoryServiceProtocol {
         return try await APIClient.shared.request(endpoint: endpoint, responseType: CreateFactoryResponse.self)
     }
     
-    func getAllPlantHeads() async throws -> GetAllPlantHeads {
+    func getAllPlantHeads() async throws -> GetPlantHeadToAssign {
         let endpoint = APIEndpoint(
             path: "\(APIConstants.baseURL)/owner/plantheads",
             method: .get,
             requiresAuth: true
         )
-        return try await APIClient.shared.request(endpoint: endpoint, responseType: GetAllPlantHeads.self)
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: GetPlantHeadToAssign.self)
     }
     
     func fetchFactories(

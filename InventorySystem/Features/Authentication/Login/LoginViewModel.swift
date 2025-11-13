@@ -4,9 +4,9 @@ enum Field {
     case name, email, password
 }
 
+@MainActor
 @Observable
 class LoginViewModel {
-    var response: LoginResponse?
     var email: String = "" {
         didSet {
             validateEmail()
@@ -62,45 +62,41 @@ class LoginViewModel {
         return true
     }
     
-    // MARK: Alert messages are not showing properly
     func handleLogin(sessionManager: SessionManager) async {
         isLoading = true
-        defer {
-            isLoading = false
-            resetForm() // MARK: check if this is right
-        }
+        defer { isLoading = false }
         
         do {
-            response = try await AuthService.shared.login(
+            let response = try await AuthService.shared.login(
                 request: LoginRequest(email: email, password: password)
             )
-            
-            if let token = response?.data.token {
-                KeychainManager.shared.save(token: token)
-            }
-            
-            if let data = response?.data {
-                let role = UserRole(rawValue: data.role) ?? .unknown
-                sessionManager.setUpUserSession(
-                    user: LoggedInUser(
-                        id: data.id,
-                        userName: data.username,
-                        email: data.email,
-                        userRole: role
+            if response.success {
+                if case .success(let data) = response.data {
+                    KeychainManager.shared.save(token: data.token)
+                    let role = UserRole(rawValue: data.role) ?? .unknown
+                    sessionManager.setUpUserSession(
+                        user: LoggedInUser(
+                            id: data.id,
+                            userName: data.username,
+                            email: data.email,
+                            userRole: role
+                        )
                     )
-                )
+                }
             } else {
-                print(response?.message)
-                showAlert(with: ErrorMessages.notRecognized.errorDescription)
+                if case .failure(let errorData) = response.data {
+                    showAlert(with: errorData.error)
+                } else {
+                    showAlert(with: response.message)
+                }
             }
+            resetForm()
         } catch let apiError as APIError {
             showAlert(with: apiError.errorDescription)
-            
         } catch {
             showAlert(with: ErrorMessages.unknownError.errorDescription)
         }
     }
-    
     private func showAlert(with message: String?) {
         alertMessage = message
         showAlert = true

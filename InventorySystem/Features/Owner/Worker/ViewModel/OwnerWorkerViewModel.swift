@@ -15,13 +15,19 @@ final class OwnerWorkerViewModel {
 
     // MARK: - Data
     var workers: [Worker] = []
+    var factories: [Factory] = []
     var appliedFilters: [String: Set<String>] = [:]
 
     // MARK: - Pagination
-    var isLoading = false
+    var isLoadingWorkers = false
     var currentPage = 0
     var totalPages = 1
     private let pageSize = 10
+    
+    var isLoadingFactories = false
+    var currentFactoryPage = 0
+    var totalFactoryPages = 1
+    private let factoryPageSize = 10
 
     // MARK: - Alerts
     var showAlert = false
@@ -29,11 +35,10 @@ final class OwnerWorkerViewModel {
 
     private var debounceTask: Task<Void, Never>? = nil
 
-    // MARK: - Fetch Workers
     func fetchWorkers(reset: Bool = false) async {
-        guard !isLoading else { return }
-        isLoading = true
-        defer { isLoading = false }
+        guard !isLoadingWorkers else { return }
+        isLoadingWorkers = true
+        defer { isLoadingWorkers = false }
 
         if reset {
             workers = []
@@ -43,6 +48,7 @@ final class OwnerWorkerViewModel {
         }
 
         do {
+            //TODO: Replace with factoryName
             let locationParam: String? = {
                 let locs = (appliedFilters["Location"] ?? [])
                     .map { $0.capitalized }
@@ -51,7 +57,7 @@ final class OwnerWorkerViewModel {
 
             let statusParam: String? = {
                 let statuses = (appliedFilters["Status"] ?? [])
-                    .map { $0.uppercased() }
+                    .map { $0.lowercased() }
                 return statuses.isEmpty ? nil : statuses.joined(separator: ",")
             }()
 
@@ -63,10 +69,8 @@ final class OwnerWorkerViewModel {
                 size: pageSize,
                 sortBy: sortByParam,
                 sortDirection: sortDirectionParam,
-                status: statusParam,
-                location: locationParam
+                status: statusParam
             )
-
             totalPages = response.pagination.totalPages
             let newItems = response.data
 
@@ -82,15 +86,13 @@ final class OwnerWorkerViewModel {
         }
     }
 
-    // MARK: - Pagination
     func loadNextPageIfNeeded(currentItem: Worker?) async {
         guard let currentItem = currentItem else { return }
         guard workers.last?.id == currentItem.id else { return }
-        guard !isLoading, currentPage < totalPages else { return }
+        guard !isLoadingWorkers, currentPage < totalPages else { return }
         await fetchWorkers()
     }
 
-    // MARK: - Filters
     func applyFilters(_ filters: [String: Set<String>]) async {
         debounceTask?.cancel()
         appliedFilters = filters.filter { !$0.value.isEmpty }
@@ -102,13 +104,11 @@ final class OwnerWorkerViewModel {
         }
     }
 
-    // MARK: - Sort
     func applySort(_ sortOption: String?) async {
         selectedSort = sortOption
         await fetchWorkers(reset: true)
     }
 
-    // MARK: - Search
     func updateSearchText(_ newText: String) {
         debounceTask?.cancel()
         searchText = newText
@@ -119,35 +119,33 @@ final class OwnerWorkerViewModel {
             await self?.fetchWorkers(reset: true)
         }
     }
-//
-//    // MARK: - Delete
-//    func prepareDelete(workerId: Int) {
-//        workerIdToDelete = workerId
-//        showDeletePopUp = true
-//    }
-//
-//    func cancelDelete() {
-//        workerIdToDelete = nil
-//        showDeletePopUp = false
-//    }
-//
-//    func confirmDelete() async {
-//        guard let id = workerIdToDelete else { return }
-//        await deleteWorker(id: id)
-//        cancelDelete()
-//    }
 
-//    func deleteWorker(id: Int) async {
-//        workers.removeAll { $0.workerID == id }
-//        do {
-//            let response = try await OwnerWorkerService.shared.deleteWorker(workerID: id)
-//            showAlert(with: response.message)
-//        } catch {
-//            showAlert(with: "Could not delete worker: \(error.localizedDescription)")
-//        }
-//    }
+    func prepareDelete(workerId: Int) {
+        workerIdToDelete = workerId
+        showDeletePopUp = true
+    }
 
-    // MARK: - Helpers
+    func cancelDelete() {
+        workerIdToDelete = nil
+        showDeletePopUp = false
+    }
+
+    func confirmDelete() async {
+        guard let id = workerIdToDelete else { return }
+        await deleteWorker(id: id)
+        cancelDelete()
+    }
+
+    func deleteWorker(id: Int) async {
+        workers.removeAll { $0.id == id }
+        do {
+            let response = try await OwnerWorkerService.shared.deleteWorker(workerID: id)
+            showAlert(with: response.message)
+        } catch {
+            showAlert(with: "Could not delete worker: \(error.localizedDescription)")
+        }
+    }
+
     private func showAlert(with message: String) {
         alertMessage = message
         showAlert = true
@@ -156,13 +154,56 @@ final class OwnerWorkerViewModel {
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
-        case "Sort by Name A-Z": return ("name", "asc")
-        case "Sort by Name Z-A": return ("name", "desc")
-        case "Sort by City A-Z": return ("city", "asc")
-        case "Sort by City Z-A": return ("city", "desc")
-        case "Sort by Role A-Z": return ("role", "asc")
-        case "Sort by Role Z-A": return ("role", "desc")
+        case "Sort by Name A-Z": return ("username", "asc")
+        case "Sort by Name Z-A": return ("username", "desc")
         default: return (nil, nil)
+        }
+    }
+
+    func refreshWithoutCancel() async {
+        workers = []
+        currentPage = 0
+        totalPages = 1
+        isLoadingWorkers = false          
+
+        await fetchWorkers(reset: true)
+    }
+    
+    func getFactories(reset: Bool = false) async {
+        guard !isLoadingFactories else { return }
+        isLoadingFactories = true
+        defer {
+            isLoadingFactories = false
+        }
+        
+        if reset {
+            factories = []
+            currentFactoryPage = 0
+        } else {
+            guard currentFactoryPage < totalFactoryPages else { return }
+        }
+        
+        do {
+            let response = try await OwnerFactoryService.shared.fetchFactories(
+                page: currentFactoryPage,
+                size: factoryPageSize,
+                sortBy: nil,
+                sortDirection: nil,
+                search: nil,
+                status: nil,
+                location: nil
+            )
+            let newItems = response.data
+
+            if reset {
+                factories = newItems
+                currentFactoryPage = 1
+            } else {
+                factories += newItems
+                currentFactoryPage += 1
+            }
+        } catch {
+            showAlert(with: "Could not get factories: \(error.localizedDescription)")
         }
     }
 }

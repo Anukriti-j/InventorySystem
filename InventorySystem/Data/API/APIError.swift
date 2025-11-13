@@ -8,6 +8,8 @@ enum APIError: Error, LocalizedError {
     case notFound
     case invalidData
     case serverError(message: String)
+    case serverMessage(String)
+    case forbidden
     case unknown
     
     var errorDescription: String? {
@@ -18,6 +20,8 @@ enum APIError: Error, LocalizedError {
         case .unauthorized: return "Unauthorized request."
         case .notFound: return "Resource not found."
         case .serverError(let message): return message
+        case .serverMessage(let message): return message
+        case .forbidden: return "You don’t have permission to perform this action."
         case .unknown: return "An unknown error occurred."
         case .invalidData:
             return "Data is invalid"

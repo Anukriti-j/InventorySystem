@@ -37,7 +37,6 @@ struct AddPlantHeadView: View {
                     if isLoading {
                         ProgressView("Loading factories...")
                     } else {
-                        // ✅ Compute the label text *outside* the Picker
                         let factoryLabel: String = {
                             if let id = selectedFactoryID,
                                let name = viewModel.unassignedFactories.first(where: { $0.factoryID == id })?.factoryName {
@@ -83,9 +82,7 @@ struct AddPlantHeadView: View {
         }
         .onAppear {
             Task {
-//                isLoading = true
                 await viewModel.getUnassignedFactories()
-//                isLoading = false
             }
         }
         .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {

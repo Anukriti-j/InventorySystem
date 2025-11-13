@@ -1,7 +1,7 @@
 struct CreateFactoryResponse: Codable {
     let success: Bool
     let message: String
-    let data: CreatedFactoryData
+    let data: CreatedFactoryData?
 }
 
 struct CreatedFactoryData: Codable {

@@ -28,7 +28,7 @@ struct AddToolView: View {
                             set: { viewModel.isPerishable = $0 ? "YES" : "NO" }
                         ))
                         .toggleStyle(SwitchToggleStyle(tint: .purple))
-
+                        
                         Toggle("Is Expensive", isOn: Binding(
                             get: { viewModel.isExpensive.uppercased() == "YES" },
                             set: { viewModel.isExpensive = $0 ? "YES" : "NO" }
@@ -90,25 +90,28 @@ extension AddToolView {
             Text("Select Category")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-
+            
             Picker("Select Category", selection: Binding<Int?>(
                 get: { viewModel.isAddingNewCategory ? -1 : viewModel.selectedCategoryID },
                 set: { newValue in
-                    if newValue == -1 {
-                        viewModel.isAddingNewCategory = true
-                        viewModel.selectedCategoryID = nil
-                    } else {
-                        viewModel.isAddingNewCategory = false
-                        viewModel.selectedCategoryID = newValue
+                    DispatchQueue.main.async {
+                        if newValue == -1 {
+                            viewModel.isAddingNewCategory = true
+                            viewModel.selectedCategoryID = nil
+                        } else {
+                            viewModel.isAddingNewCategory = false
+                            viewModel.selectedCategoryID = newValue
+                        }
                     }
                 }
             )) {
-                // Categories
+                Text("Select a category").tag(Optional<Int>(nil)) 
+                
                 ForEach(viewModel.categories, id: \.id) { category in
                     Text(category.categoryName)
                         .tag(Optional(category.id))
                 }
-
+                
                 Text("+ Add New Category")
                     .tag(Optional(-1))
             }
@@ -121,7 +124,7 @@ extension AddToolView {
                     .stroke(Color.gray.opacity(0.3))
             )
             .tint(.purple)
-
+            
             if viewModel.isAddingNewCategory {
                 TextField("Enter new category name", text: Binding(
                     get: { viewModel.newCategoryName ?? "" },
@@ -134,5 +137,5 @@ extension AddToolView {
         }
         .animation(.easeInOut, value: viewModel.isAddingNewCategory)
     }
-
+    
 }

@@ -11,10 +11,18 @@ struct OwnerFactoryView: View {
             }
             .navigationTitle("Factories")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { addFactoryToolbar }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        viewModel.showAddSheet = true
+                    } label: {
+                        Text("Add +")
+                            .fontWeight(.bold)
+                    }
+                }
+            }
             .task { await loadInitialData() } // Fetch initial data
             
-            // Delete confirmation alert
             .alert("Alert", isPresented: $viewModel.showDeletePopUp) {
                 Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
                 Button("Delete", role: .destructive) {
@@ -23,7 +31,6 @@ struct OwnerFactoryView: View {
             } message: {
                 Text("Are you sure you want to delete the selection!")
             }
-            
             // Navigation to detail screen
             .navigationDestination(isPresented: $viewModel.showFactoryDetail) {
                 OwnerFactoryDetailView()
@@ -55,17 +62,16 @@ struct OwnerFactoryView: View {
                 Task { await viewModel.applySort(chosenSort) }
             }
         }
-        
-        // Add factory sheet
         .sheet(isPresented: $viewModel.showAddSheet) {
-            AddFactoryView()
+            AddFactoryView(ownerFactoryViewModel: viewModel)
+        }
+        .sheet(item: $viewModel.selectedFactory) { factory in
+            EditFactoryView(factory: factory, factoryViewModel: viewModel)
         }
     }
 }
 
 extension OwnerFactoryView {
-    
-    // MARK: - UI Components
     
     private var filterAndSortBar: some View {
         FilterSortBar(
@@ -82,7 +88,7 @@ extension OwnerFactoryView {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.factories.isEmpty {
                 VStack(spacing: 12) {
-                    Image(systemName: "building.2.slash")
+                    Image(systemName: "building.2")
                         .font(.system(size: 50))
                         .foregroundColor(.gray)
                     Text("No factories found")
@@ -101,17 +107,7 @@ extension OwnerFactoryView {
                         } label: {
                             FactoryInfoCardView(
                                 viewModel: viewModel,
-                                factoryID: factory.id,
-                                factoryName: factory.factoryName,
-                                location: factory.location,
-                                status: factory.status,
-                                infoRows: [
-                                    FactoryInfoRow(label: "Plant Head:", value: factory.plantHeadName),
-                                    FactoryInfoRow(label: "Chief Supervisor", value: factory.chiefSupervisorName),
-                                    FactoryInfoRow(label: "Total Products:", value: "\(factory.totalProducts)"),
-                                    FactoryInfoRow(label: "Total Workers:", value: "\(factory.totalWorkers)"),
-                                    FactoryInfoRow(label: "Total Tools:", value: "\(factory.totalTools)")
-                                ]
+                                factory: factory
                             )
                         }
                         .listRowSeparator(.hidden)
@@ -121,7 +117,6 @@ extension OwnerFactoryView {
                         }
                     }
                     
-                    // Bottom loading or “all loaded” messages
                     if viewModel.isLoading && !viewModel.factories.isEmpty && viewModel.currentPage < viewModel.totalPages {
                         ProgressView("Loading more…")
                             .frame(maxWidth: .infinity)
@@ -145,25 +140,10 @@ extension OwnerFactoryView {
         .searchable(text: $viewModel.searchText)
     }
     
-    private var addFactoryToolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                viewModel.showAddSheet = true
-            } label: {
-                Text("Add +")
-                    .fontWeight(.bold)
-            }
-        }
-    }
-    
-    // MARK: - Actions
-    
     private func loadInitialData() async {
         await viewModel.fetchFactories(reset: true)
     }
 }
-
-// MARK: - Supporting Model
 
 struct FactoryInfoRow: Identifiable {
     let id = UUID()

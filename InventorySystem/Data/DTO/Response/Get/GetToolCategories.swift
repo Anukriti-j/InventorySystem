@@ -1,12 +1,12 @@
 import Foundation
 
-struct GetCategories: Codable {
+struct GetToolCategories: Codable {
     let success: Bool
     let message: String
-    let data: [Category]
+    let data: [ToolCategory]
 }
 
-struct Category: Codable, Identifiable {
+struct ToolCategory: Codable, Identifiable {
     let id: Int
     let categoryName, categoryDescription: String
 }

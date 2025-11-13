@@ -2,13 +2,14 @@ import SwiftUI
 
 struct AddFactoryView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = AddFactoryViewModel()
+    @State private var addFactoryViewModel = AddFactoryViewModel()
+    @Bindable var ownerFactoryViewModel: OwnerFactoryViewModel
 
     var body: some View {
         NavigationStack {
             Form {
                 factoryDetailsSection
-                if viewModel.isFetchingPlantHeads {
+                if addFactoryViewModel.isFetchingPlantHeads {
                     ProgressView()
                 } else {
                     plantHeadSection
@@ -24,26 +25,28 @@ struct AddFactoryView: View {
                     Button {
                         Task {
                             await saveFactory()
+                            if addFactoryViewModel.success {
+                                await ownerFactoryViewModel.fetchFactories(reset: true)
+                            }
                         }
                     } label: {
-                        if viewModel.isSavingFactory {
+                        if addFactoryViewModel.isSavingFactory {
                             ProgressView()
                         } else { Text("Save") }
                     }
-                    .disabled(!viewModel.isFormValid)
+                    .disabled(!addFactoryViewModel.isFormValid)
                     .bold()
                 }
             }
         }
         .onAppear(perform: {
             Task {
-                print("on appear get all ph called")
-             await viewModel.getAllPlantHeads()
+             await addFactoryViewModel.getAllPlantHeads()
             }
         })
-        .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
+        .alert(addFactoryViewModel.alertMessage ?? "Message", isPresented: $addFactoryViewModel.showAlert) {
             Button("OK") {
-                if viewModel.success {
+                if addFactoryViewModel.success {
                     dismiss()
                 }
             }
@@ -54,32 +57,32 @@ struct AddFactoryView: View {
 extension AddFactoryView {
     
     private func saveFactory() async {
-        await viewModel.createFactory()
+        await addFactoryViewModel.createFactory()
         
         await MainActor.run {
-            if viewModel.success {
-                viewModel.alertMessage = "Factory created successfully!"
+            if addFactoryViewModel.success {
+                addFactoryViewModel.alertMessage = "Factory created successfully!"
             } else {
-                viewModel.alertMessage = "Failed to create factory."
+                addFactoryViewModel.alertMessage = "Failed to create factory."
             }
-            viewModel.showAlert = true
+            addFactoryViewModel.showAlert = true
         }
     }
     
     private var factoryDetailsSection: some View {
         Section(header: Text("Factory Details")) {
-            TextField("Factory Name", text: $viewModel.name)
-            TextField("City", text: $viewModel.city)
-            TextField("Address", text: $viewModel.address, axis: .vertical)
+            TextField("Factory Name", text: $addFactoryViewModel.name)
+            TextField("City", text: $addFactoryViewModel.city)
+            TextField("Address", text: $addFactoryViewModel.address, axis: .vertical)
                 .lineLimit(2...4)
         }
     }
     
     private var plantHeadSection: some View {
         Section(header: Text("Plant Head")) {
-            Picker("Select Plant Head", selection: $viewModel.plantHeadID) {
+            Picker("Select Plant Head", selection: $addFactoryViewModel.plantHeadID) {
                 Text("Select").tag(Optional<Int>.none)
-                ForEach(viewModel.activePlantHeads) { plantHead in
+                ForEach(addFactoryViewModel.activePlantHeads) { plantHead in
                     Text(plantHead.username).tag(plantHead.id)
                 }
             }
@@ -87,6 +90,6 @@ extension AddFactoryView {
     }
 }
 
-#Preview {
-    AddFactoryView()
-}
+//#Preview {
+//    AddFactoryView()
+//}

@@ -3,7 +3,7 @@ import Foundation
 struct LoadPHFactoryResponse: Codable {
     let success: Bool
     let message: String
-    let data: [LoadPHFactoryResponseData]
+    let data: [LoadPHFactoryResponseData]?
 }
 
 struct LoadPHFactoryResponseData: Codable {

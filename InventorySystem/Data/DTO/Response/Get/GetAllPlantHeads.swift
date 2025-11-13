@@ -3,16 +3,12 @@ import Foundation
 struct GetAllPlantHeads: Codable {
     let success: Bool
     let message: String
-    let data: [GetAllPlantHeadData]
+    let data: [PlantHead]
+    let pagination: Pagination
 }
 
-struct GetAllPlantHeadData: Codable, Identifiable {
+struct PlantHead: Codable, Identifiable {
     let id: Int
-    let username, isActive: String
-
-    enum CodingKeys: String, CodingKey {
-        case id = "plantheadId"
-        case username, isActive
-    }
+    let username, email, role, isActive: String
+    let createdAt: String
 }
-

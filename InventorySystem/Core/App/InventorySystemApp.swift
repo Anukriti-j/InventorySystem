@@ -16,3 +16,7 @@ struct InventorySystemApp: App {
 // define protocols for services
 // failed to create central officer
 // get all factories not working - backend error
+// update tool api not working
+// remove factory filters from tools
+// edit factory
+// on any operation add, update, delete - fetch call

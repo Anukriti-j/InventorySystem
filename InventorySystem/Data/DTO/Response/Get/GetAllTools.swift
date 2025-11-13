@@ -9,15 +9,16 @@ struct GetAllTools: Codable {
 
 struct Tool: Codable, Identifiable {
     let id: Int
+    let categoryId: Int
     let name, description, categoryName: String
     let imageURL: String
     let isPerishable, isExpensive: String
-    let threshold, availableQuantity: Int
+    let threshold, availableQuantity, totalQuantity: Int
     let status, stockStatus, createdAt, updatedAt: String
     
     enum CodingKeys: String, CodingKey {
-        case id, name, description, categoryName
+        case id, name, description, categoryName, categoryId
         case imageURL = "imageUrl"
-        case isPerishable, isExpensive, threshold, availableQuantity, status, stockStatus, createdAt, updatedAt
+        case isPerishable, isExpensive, threshold, availableQuantity,totalQuantity, status, stockStatus, createdAt, updatedAt
     }
 }

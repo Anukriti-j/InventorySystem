@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CustomButton: ViewModifier {
+struct CustomButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding()
@@ -13,6 +13,6 @@ struct CustomButton: ViewModifier {
 
 extension View {
     func customStyle() -> some View {
-        modifier(CustomButton())
+        modifier(CustomButtonModifier())
     }
 }

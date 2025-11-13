@@ -9,13 +9,15 @@ struct GetAllWorkers: Codable {
 
 struct Worker: Codable, Identifiable {
     let id: Int
-    let workerName, factoryName, location, bayArea: String
-    let status: String
+    let workerName, factoryName: String
+    let factoryID: Int
+    let location, bayArea, status: String
+    let profileImage: String?
 
     enum CodingKeys: String, CodingKey {
         case id = "workerId"
-        case workerName, factoryName, location, bayArea, status
+        case workerName, factoryName
+        case factoryID = "factoryId"
+        case location, bayArea, status, profileImage
     }
 }
-
-

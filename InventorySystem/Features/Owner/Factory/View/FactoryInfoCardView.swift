@@ -3,63 +3,81 @@ import SwiftUI
 
 struct FactoryInfoCardView: View {
     @Bindable var viewModel: OwnerFactoryViewModel
-    let factoryID: Int
-    let factoryName: String
-    let location: String?
-    let status: String
-    let infoRows: [FactoryInfoRow]
+    let factory: Factory
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(factoryName)
+                    Text(factory.factoryName)
                         .font(.system(size: 20, weight: .bold))
                     Spacer()
-                    Button {
-                        viewModel.showEditSheet = true
-                    } label: {
-                        Image(systemName: "pencil")
-                    }
-                    Button {
-                        viewModel.prepareDelete(factoryId: factoryID)
-                        viewModel.showDeletePopUp = true
-                    } label: {
-                        Image(systemName: "trash")
-                            .foregroundStyle(.red)
-                    }
                     
-                    
+                    if factory.status.lowercased() == "active" {
+                        Button {
+                            viewModel.selectedFactory = factory
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                        Button {
+                            viewModel.prepareDelete(factoryId: factory.id)
+                            viewModel.showDeletePopUp = true
+                            if viewModel.deleteSuccess {
+                                Task {
+                                    await viewModel.fetchFactories(reset: true)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                        }
+                    }
                 }
                 
-                if let location {
-                    Text(location)
-                        .font(.system(size: 13, weight: .semibold))
-                }
+                Text(factory.location)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(factory.address)
+                    .font(.system(size: 13, weight: .semibold))
             }
             
-            VStack(spacing: 6) {
-                ForEach(infoRows, id: \.label) { row in
-                    HStack {
-                        Text(row.label)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.gray)
-                        Spacer()
-                        Text(row.value)
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                }
+            HStack {
+                Text("PlantHead")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.gray)
+                Spacer()
+                Text(factory.plantHeadName)
+                    .font(.system(size: 13, weight: .semibold))
             }
             HStack {
-                // MARK: fetch status from API
+                Text("Chief Supervisor")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.gray)
+                Spacer()
+                Text(factory.chiefSupervisorName)
+                    .font(.system(size: 13, weight: .semibold))
+            }
+            HStack {
                 Text("Status")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.gray)
                 Spacer()
-                Text(status)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(status == "ACTIVE" ? .green : .red)
+                Text(factory.status)
+                    .customStatusStyle(status: factory.status)
+            }
+            HStack {
+                VStack {
+                    Text("Tools")
+                    Text("\(factory.totalTools)")
+                }
+                VStack {
+                    Text("Products")
+                    Text("\(factory.totalProducts)")
+                }
+                VStack {
+                    Text("Workers")
+                    Text("\(factory.totalWorkers)")
+                }
             }
         }
         .padding(16)

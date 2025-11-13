@@ -10,18 +10,16 @@ final class OwnerWorkerService {
         sortBy: String?,
         sortDirection: String?,
         status: String?,
-        location: String?
     ) async throws -> GetAllWorkers {
+        print("fetching workers")
         let path = pathBuilder.buildPath(
-            "/owner/allworkers",
+            "/owner/worker/getall",
             queryItems: [
                 "page": "\(page)",
                 "size": "\(size)",
                 "sortBy": sortBy,
                 "sortDirection": sortDirection,
-                "status": status,
-                "location": location
-                
+                "status": status
             ]
         )
         let endpoint = APIEndpoint(
@@ -30,5 +28,15 @@ final class OwnerWorkerService {
             requiresAuth: true
         )
         return try await APIClient.shared.request(endpoint: endpoint, responseType: GetAllWorkers.self)
+    }
+    
+    func deleteWorker(workerID: Int) async throws -> DeleteWorkerResponse {
+        let path = pathBuilder.buildPath("/owner/worker/delete/\(workerID)")
+        let endpoint = APIEndpoint(
+            path: path,
+            method: .delete,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: DeleteWorkerResponse.self)
     }
 }
