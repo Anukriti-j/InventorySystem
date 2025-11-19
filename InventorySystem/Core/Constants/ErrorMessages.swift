@@ -7,6 +7,8 @@ enum ErrorMessages {
     case invalidEmail
     case invalidPassword
     case notRecognized
+    case requiredPoints
+    case availQuantity
     case unknownError
     
     var errorDescription: String {
@@ -24,6 +26,10 @@ enum ErrorMessages {
             return "Password must be at least 6 characters"
         case .notRecognized:
             return "User role not recognized"
+        case .requiredPoints:
+            return "Required points must be greater than or equal to 1"
+        case .availQuantity:
+            return "Available quantity should be greater than or equal to 1"
         case .unknownError:
             return "Something went wrong. Please try again"
         }

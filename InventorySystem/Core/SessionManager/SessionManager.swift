@@ -19,11 +19,31 @@ final class SessionManager {
         
     }
     
-    // MARK: - LOGOUT
     func clearUserSession() {
         self.isLoggedIn = false
         self.selectedScreen = nil
+        selectedMenuID = nil
+                user = nil
+                print("User session cleared")
     }
 }
 
-
+//extension SessionManager {
+//    var currentScreenTitle: String {
+//        switch selectedScreen {
+//        case is OwnerFactoryView:      return "Factories"
+//        case is OwnerWorkerView:       return "Workers"
+//        case is OwnerCOView:           return "Central Officers"
+//        case is ReportsView:           return "Reports"
+//        default:                       return "Dashboard"
+//        }
+//    }
+//
+//    var currentTrailingAction: (() -> Void)? {
+//        switch selectedScreen {
+//        case is OwnerFactoryView: return { showAddFactorySheet = true }
+//        case is OwnerWorkerView:  return { showAddWorkerSheet = true }
+//        default:                  return nil
+//        }
+//    }
+//}

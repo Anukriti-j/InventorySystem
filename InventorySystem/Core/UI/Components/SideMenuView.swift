@@ -2,81 +2,123 @@ import SwiftUI
 
 struct SideMenuView: View {
     @Environment(SessionManager.self) private var manager: SessionManager
-    let items: [MenuItem]
     @Environment(\.showMenuBinding) var showMenu
     
+    let items: [MenuItem]
+    
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 25) {
+        VStack(alignment: .leading, spacing: 0) {
+            
+            HStack {
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.blue)
+                    .padding(.bottom, 8)
+                
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(manager.user?.userName ?? "Unknown")
-                        .font(.title.bold())
-                    Text(manager.user?.email ?? "Not found")
-                        .font(.caption)
-                        .foregroundStyle(Color.secondaryText)
-                    Text(manager.user?.userRole.rawValue.capitalized ?? "Unknown")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                }
-                .padding(.top, 50)
-                
-                Divider().padding(.vertical)
-                
-                ForEach(items) { item in
-                    let isSelected = manager.selectedMenuID == item.id
+                    Text(manager.user?.userName ?? "Guest User")
+                        .font(.title2.bold())
+                        .foregroundColor(.primary)
                     
-                    Button {
-                        if let view = item.destination {
-                            manager.selectedScreen = view
-                            manager.selectedMenuID = item.id
-                            withAnimation { showMenu.wrappedValue = false }
-                        }
-                    } label: {
-                        HStack(spacing: 12) {
-                            // ✅ Left indicator
-                            Rectangle()
-                                .fill(isSelected ? Color.blue : .clear)
-                                .frame(width: 4)
-                            
-                            HStack(spacing: 14) {
-                                Image(systemName: item.icon)
-                                Text(item.title)
-                            }
-                            .foregroundColor(isSelected ? .blue : .primary)
-                            .padding(.vertical, 12)
-                            .padding(.leading, 4)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(isSelected ? Color.blue.opacity(0.08) : .clear)                    }
-                    .buttonStyle(.plain)
-                }
-                
-                Spacer()
-                
-                Button {
-                    manager.clearUserSession()
-                } label: {
-                    HStack {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                        Text("Logout")
+                    Text(manager.user?.email ?? "No email")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    if let role = manager.user?.userRole {
+                        Text(role.rawValue.capitalized)
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.blue)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.1))
+                            .clipShape(Capsule())
                     }
-                    .font(.headline)
                 }
-                .padding(.bottom, 30)
             }
-            .padding(.horizontal, 20)
-            .frame(maxHeight: .infinity, alignment: .topLeading)
-            .ignoresSafeArea(.all)
+            .padding(.top, 60)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Divider()
+                .padding(.horizontal, 24)
+                .padding(.bottom, 12)
+            
+            // MENU ITEMS
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(items) { item in
+                        let isSelected = manager.selectedMenuID == item.id
+                        
+                        Button {
+                            let destinationView = item.destination()
+                            
+                            manager.selectedScreen = AnyView(destinationView)
+                            manager.selectedMenuID = item.id
+                            
+                            withAnimation(.easeInOut(duration: 0.20)) {
+                                showMenu.wrappedValue = false
+                            }
+                        } label: {
+                            HStack(spacing: 0) {
+                                Rectangle()
+                                    .fill(isSelected ? Color.blue : Color.clear)
+                                    .frame(width: 4)
+                                
+                                HStack(spacing: 14) {
+                                    Image(systemName: item.icon)
+                                        .font(.title3)
+                                        .frame(width: 24)
+                                    
+                                    Text(item.title)
+                                        .font(.body)
+                                    
+                                    Spacer()
+                                }
+                                .foregroundColor(isSelected ? .blue : .primary)
+                                .padding(.vertical, 16)
+                                .padding(.leading, 20)
+                                .padding(.trailing, 24)
+                                .background(isSelected ? Color.blue.opacity(0.08) : Color.clear)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            // LOGOUT BUTTON
+            Divider()
+                .padding(.horizontal, 24)
+            
+            Button {
+                manager.clearUserSession()
+                withAnimation(.easeInOut(duration: 0.20)) {
+                    showMenu.wrappedValue = false
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.title3)
+                        .frame(width: 24)
+                    
+                    Text("Logout")
+                        .font(.body.weight(.medium))
+                    
+                    Spacer()
+                }
+                .foregroundColor(.red)
+                .padding(.vertical, 16)
+                .padding(.horizontal, 24)
+            }
+            .buttonStyle(.plain)
+            .padding(.bottom, 40)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.white)
+        .shadow(color: .black.opacity(0.1), radius: 5, x: 2, y: 0)
+        .ignoresSafeArea()
     }
 }
-
-
-#Preview {
-    SideMenuView(items: [
-        MenuItem(icon: "person.fill", title: "Person", destination: AnyView(Text("Preview Screen")))
-    ])
-    .environment(SessionManager())
-    .environment(\.showMenuBinding, .constant(false))
-}
-
