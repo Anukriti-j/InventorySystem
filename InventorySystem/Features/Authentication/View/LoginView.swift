@@ -168,7 +168,6 @@ struct SecureInputField: View {
     }
 }
 
-
 #Preview {
-    LoginView() 
+    LoginView()
 }

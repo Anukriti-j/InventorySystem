@@ -33,7 +33,7 @@ final class CentralOfficeService {
                 "role": role.uppercased(),
                 "sortBy": sortBy,
                 "sortDirection": sortDirection,
-                "search": search,
+                "name": search,
                 "statuses": statuses
             ]
         )

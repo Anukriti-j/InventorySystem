@@ -111,7 +111,7 @@ class LoginViewModel {
             manager.selectedFactoryID = nil
         }
     }
-
+    
     private func showAlert(with message: String?) {
         alertMessage = message
         showAlert = true

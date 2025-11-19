@@ -8,30 +8,30 @@ final class ToolService {
     private init() {}
     
     func fetchTools(
-            factoryId: Int? = nil,
-            categoryNames: String? = nil,
-            availability: String? = nil,
-            page: Int,
-            size: Int,
-            sortBy: String? = nil,
-            sortDir: String? = nil,
-            search: String? = nil
-        ) async throws -> GetAllTools {
-
-            let queryItems: [String: String?] = [
-                "factoryId": factoryId.map { "\($0)" },
-                "categoryNames": categoryNames,
-                "availability": availability,
-                "page": "\(page)",
-                "size": "\(size)",
-                "sortBy": sortBy,
-                "sortDir": sortDir,
-                "search": search
-            ]
-            let path = pathBuilder.buildPath("/tools/getAll", queryItems: queryItems)
-            let endpoint = APIEndpoint(path: path, method: .get, requiresAuth: true)
-            return try await APIClient.shared.request(endpoint: endpoint, responseType: GetAllTools.self)
-        }
+        factoryId: Int? = nil,
+        categoryNames: String? = nil,
+        availability: String? = nil,
+        page: Int,
+        size: Int,
+        sortBy: String? = nil,
+        sortDir: String? = nil,
+        search: String? = nil
+    ) async throws -> GetAllTools {
+        
+        let queryItems: [String: String?] = [
+            "factoryId": factoryId.map { "\($0)" },
+            "categoryNames": categoryNames,
+            "availability": availability,
+            "page": "\(page)",
+            "size": "\(size)",
+            "sortBy": sortBy,
+            "sortDir": sortDir,
+            "search": search
+        ]
+        let path = pathBuilder.buildPath("/tools/getAll", queryItems: queryItems)
+        let endpoint = APIEndpoint(path: path, method: .get, requiresAuth: true)
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: GetAllTools.self)
+    }
     
     func deleteTool(toolID: Int) async throws -> DeleteToolResponse {
         let path = pathBuilder.buildPath("/tools/delete/\(toolID)")

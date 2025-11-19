@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CentralOfficerCardView: View {
-    @ObservedObject var viewModel: CentralOfficerViewModel
+    @Bindable var viewModel: CentralOfficerViewModel
     let officer: CentralOfficer
     
     var body: some View {
@@ -36,7 +36,5 @@ struct CentralOfficerCardView: View {
                 .shadow(radius: 4)
         )
         .contentShape(Rectangle())
-//        .onTapGesture { } // Eat taps on card
-//        .allowsHitTesting(false) // Disable card
     }
 }

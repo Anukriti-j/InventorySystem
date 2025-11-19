@@ -1,53 +1,43 @@
 import Foundation
 
 @MainActor
-final class CentralOfficerViewModel: ObservableObject {
-  
-    @Published var showAlert = false
-    @Published  var alertMessage: String?
-    @Published var showAddSheet: Bool = false
-    @Published var centralOfficers: [CentralOfficer] = []
-    @Published var currentPage = 0
-    @Published var totalPages = 1
-    @Published var isLoading = false
-    @Published var searchText: String = ""
-    @Published var showfilterSheet: Bool = false
-    @Published var showSortSheet: Bool = false
-    @Published var selectedSort: String? = nil
-    @Published var showDeletePopUp: Bool = false
-    @Published var centralOfficerToDelete: Int? = nil
+@Observable
+final class CentralOfficerViewModel {
+    var showAlert = false
+    var alertMessage: String?
+    var showAddSheet = false
+    var centralOfficers: [CentralOfficer] = []
+    var currentPage = 0
+    var totalPages = 1
+    var isLoading = false
+    var searchText = ""
+    var selectedSort: String?
+    var showDeletePopUp = false
+    var centralOfficerToDelete: Int?
     
     private let pageSize = 10
-    
     var appliedFilters: [String: Set<String>] = [:]
-    
-    private var debounceTask: Task<Void, Never>? = nil
-   
+    private var debounceTask: Task<Void, Never>?
+
     func fetchCentralOfficer(reset: Bool = false) async {
-        guard !isLoading else {
-            print("⏳ Skipping fetch — already loading")
-            return
-        }
-        
+        guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
-        
+
         if reset {
             centralOfficers = []
             currentPage = 0
-        } else {
-            guard currentPage < totalPages else { return }
         }
+
+        let statusParam: String? = {
+            let statuses = appliedFilters["Status"] ?? []
+            return statuses.isEmpty ? nil : statuses.map { $0.lowercased() == "active" ? "ACTIVE" : "INACTIVE" }.joined(separator: ",")
+        }()
+
+        let (sortByParam, sortDirectionParam) = mapSortToParams(selectedSort)
+        let searchParam = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : searchText
+
         do {
-            let statusParam: String? = {
-                let statuses = (appliedFilters["Status"] ?? [])
-                    .map { $0.uppercased() }
-                return statuses.isEmpty ? nil : statuses.joined(separator: ",")
-            }()
-            
-            let (sortByParam, sortDirectionParam) = mapSortToParams(selectedSort)
-            let searchParam = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : searchText
-            
             let response = try await CentralOfficeService.shared.fetchCentralOfficer(
                 page: currentPage,
                 size: pageSize,
@@ -59,7 +49,7 @@ final class CentralOfficerViewModel: ObservableObject {
             )
             totalPages = response.pagination.totalPages
             let newItems = response.data
-            
+
             if reset {
                 centralOfficers = newItems
                 currentPage = 1
@@ -68,98 +58,71 @@ final class CentralOfficerViewModel: ObservableObject {
                 currentPage += 1
             }
         } catch {
-            showAlert(with: "Cannot fetch Central Officer: \(error.localizedDescription)")
+            if !Task.isCancelled {
+                showAlert(with: "Cannot fetch officers: \(error.localizedDescription)")
+            }
         }
     }
-    
-    private func showAlert(with message: String) {
-        alertMessage = message
-        showAlert = true
-    }
-    
+
     func loadNextPageIfNeeded(currentItem: CentralOfficer?) async {
-        guard let currentItem = currentItem else { return }
-        // threshold: when currentItem is the last item
-        guard centralOfficers.last?.id == currentItem.id else { return }
-        guard !isLoading else { return }
-        guard currentPage < totalPages else { return }
+        guard let currentItem, centralOfficers.last?.id == currentItem.id else { return }
+        guard currentPage < totalPages, !isLoading else { return }
         await fetchCentralOfficer()
     }
-    
-    func applyFilters(_ filters: [String: Set<String>]) async {
-        debounceTask?.cancel()
-        appliedFilters = filters.filter { !$0.value.isEmpty }
 
-        debounceTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300 * 1_000_000) // 0.3s
-            guard !Task.isCancelled else { return }
-            await self?.fetchCentralOfficer(reset: true)
-        }
+    func applyFilters(_ filters: [String: Set<String>]) async {
+        appliedFilters = filters.filter { !$0.value.isEmpty }
+        await fetchCentralOfficer(reset: true)
     }
-    
+
     func applySort(_ sortOption: String?) async {
         selectedSort = sortOption
         await fetchCentralOfficer(reset: true)
     }
-    
+
     func updateSearchText(_ newText: String) {
-        debounceTask?.cancel()
         searchText = newText
-        
-        // Debounce 300ms
-        debounceTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300 * 1_000_000) // 300ms
+        debounceTask?.cancel()
+        debounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
-            await self?.fetchCentralOfficer(reset: true)
+            await self.fetchCentralOfficer(reset: true)
         }
     }
-    
-    // MARK: - Helpers
-    
+
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
-        case "Sort by Name A-Z":
-            return ("username", "asc")
-        case "Sort by Name Z-A":
-            return ("username", "desc")
-        default:
-            return (nil, nil)
+        case "Sort by Name A-Z": return ("username", "asc")
+        case "Sort by Name Z-A": return ("username", "desc")
+        default: return (nil, nil)
         }
     }
-    
+
     func prepareDelete(centralOfficerID: Int) {
         centralOfficerToDelete = centralOfficerID
         showDeletePopUp = true
     }
-    
+
     func cancelDelete() {
-        showAlert = false
+        showDeletePopUp = false
         centralOfficerToDelete = nil
     }
-    
+
     func confirmDelete() async {
         guard let id = centralOfficerToDelete else { return }
-        await deleteCentralOfficer(id: id)
-        cancelDelete()
-    }
-    
-    func deleteCentralOfficer(id: Int) async {
         centralOfficers.removeAll { $0.id == id }
-        
         do {
             let response = try await CentralOfficeService.shared.deleteCentralOfficer(id: id)
             showAlert(with: response.message)
         } catch {
-            showAlert(with: "Could not delete factory: \(error.localizedDescription)")
+            showAlert(with: "Failed to delete officer")
         }
+        cancelDelete()
     }
-    
-    func refreshWithoutCancel() async {
-        isLoading = false
-        centralOfficers = []
-        currentPage = 1
-        totalPages = 1
-        await fetchCentralOfficer(reset: true)
+
+    private func showAlert(with message: String) {
+        alertMessage = message
+        showAlert = true
     }
 }

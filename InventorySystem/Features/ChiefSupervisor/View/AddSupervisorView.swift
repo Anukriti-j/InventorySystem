@@ -12,19 +12,19 @@ struct AddSupervisorView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         TextField("Name", text: $viewModel.name)
                             .autocapitalization(.words)
-
+                        
                         if let error = viewModel.nameError {
                             Text(error)
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
                     }
-
+                    
                     VStack(alignment: .leading, spacing: 6) {
                         TextField("Email", text: $viewModel.email)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
-
+                        
                         if let error = viewModel.emailError {
                             Text(error)
                                 .font(.caption)
@@ -39,7 +39,7 @@ struct AddSupervisorView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-
+                
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Create") {
                         createSupervisor()
@@ -54,7 +54,7 @@ struct AddSupervisorView: View {
             }
         }
     }
-
+    
     private func createSupervisor() {
         Task {
             guard let factoryID = parentViewModel.selectedFactoryId else {
@@ -62,9 +62,9 @@ struct AddSupervisorView: View {
                 viewModel.showAlert = true
                 return
             }
-
+            
             await viewModel.addChiefSupervisor(factoryID: factoryID)
-
+            
             if viewModel.success {
                 await parentViewModel.getSupervisor()
             }

@@ -3,31 +3,67 @@ import SwiftUI
 struct AddProductView: View {
     @StateObject private var viewModel = AddProductViewModel()
     @Environment(\.dismiss) private var dismiss
-
+    let parentViewModel: ProductsViewModel
+    
+    init(parentViewModel: ProductsViewModel) {
+        self.parentViewModel = parentViewModel
+    }
+    
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                   
+                    
                     AddImageView(selectedImage: $viewModel.selectedImage)
-
+                    
                     VStack(spacing: 16) {
-                        TextField("Product Name", text: $viewModel.name)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-
-                        TextField("Description", text: $viewModel.productDescription)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Product Name", text: $viewModel.name)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                            
+                            if let error = viewModel.nameError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Description", text: $viewModel.productDescription)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                            
+                            if let error = viewModel.descriptionError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
+                        }
+                        
                         handleCategoryPicker()
-
-                        TextField("Price", text: $viewModel.price)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .keyboardType(.decimalPad)
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Price", text: $viewModel.price)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .keyboardType(.decimalPad)
+                            
+                            if let error = viewModel.priceError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
+                        }
                     }
                     .padding(.horizontal)
-
+                    
                     Button {
-                        Task { await viewModel.createProduct() }
+                        Task {
+                            await viewModel.createProduct()
+                            if viewModel.success {
+                                await parentViewModel.fetchProducts(reset: true)
+                            }
+                        }
+                        
                     } label: {
                         if viewModel.isLoading {
                             ProgressView()
@@ -41,13 +77,13 @@ struct AddProductView: View {
                                 .fontWeight(.semibold)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.purple)
+                                .background(viewModel.isFormValid ? Color.purple : Color.gray)
                                 .foregroundColor(.white)
                                 .cornerRadius(10)
                         }
                     }
                     .padding(.horizontal)
-                    .disabled(viewModel.isLoading || viewModel.name.isEmpty || viewModel.price.isEmpty)
+                    .disabled(!viewModel.isFormValid)
                 }
                 .padding(.vertical)
             }
@@ -55,17 +91,13 @@ struct AddProductView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundColor(.red)
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(.red)
                 }
             }
             .alert("Product Creation", isPresented: $viewModel.showAlert) {
                 Button("OK") {
-                    if viewModel.success {
-                        dismiss()
-                    }
+                    if viewModel.success { dismiss() }
                 }
             } message: {
                 Text(viewModel.alertMessage ?? "")
@@ -75,15 +107,14 @@ struct AddProductView: View {
             }
         }
     }
-
-    // MARK: - Category Picker (Same as Tool)
+    
     @ViewBuilder
     private func handleCategoryPicker() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select Category")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-
+            
             Picker("Select Category", selection: Binding<Int?>(
                 get: { viewModel.isAddingNewCategory ? -1 : viewModel.selectedCategoryID },
                 set: { newValue in
@@ -97,14 +128,13 @@ struct AddProductView: View {
                 }
             )) {
                 Text("Select a category").tag(Optional<Int>(nil))
-
+                
                 ForEach(viewModel.categories) { category in
                     Text(category.categoryName)
                         .tag(Optional(category.id))
                 }
-
-                Text("+ Add New Category")
-                    .tag(Optional(-1))
+                
+                Text("+ Add New Category").tag(Optional(-1))
             }
             .pickerStyle(.menu)
             .frame(maxWidth: .infinity)
@@ -115,7 +145,13 @@ struct AddProductView: View {
                     .stroke(Color.gray.opacity(0.3))
             )
             .tint(.purple)
-
+            
+            if let error = viewModel.categoryError {
+                Text(error)
+                    .foregroundColor(.red)
+                    .font(.caption)
+            }
+            
             if viewModel.isAddingNewCategory {
                 TextField("Enter new category name", text: Binding(
                     get: { viewModel.newCategoryName ?? "" },

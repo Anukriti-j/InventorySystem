@@ -8,7 +8,6 @@ final class KeychainManager: KeyChainManaging {
     
     func save(token: String) {
         if let data = token.data(using: .utf8) {
-            // Delete existing
             delete()
             
             let query: [String: Any] = [

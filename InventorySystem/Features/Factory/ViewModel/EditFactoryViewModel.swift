@@ -8,7 +8,7 @@ final class EditFactoryViewModel: ObservableObject {
     @Published var address: String
     @Published var plantHeadID: Int?
     @Published var plantHeadName: String
-
+    
     @Published var isLoading = false
     @Published var showAlert = false
     @Published var alertMessage: String?
@@ -19,9 +19,9 @@ final class EditFactoryViewModel: ObservableObject {
     var activePlantHeads: [PlantHeadData] {
         plantHeadList.filter { $0.isActive == "ACTIVE" }
     }
-
+    
     private let originalFactory: Factory
-
+    
     init(factory: Factory) {
         self.originalFactory = factory
         self.factoryName = factory.factoryName
@@ -30,14 +30,14 @@ final class EditFactoryViewModel: ObservableObject {
         self.plantHeadName = factory.plantHeadName
         self.plantHeadID = factory.plantHeadId
     }
-
+    
     var isFormValid: Bool {
         !factoryName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !location.trimmingCharacters(in: .whitespaces).isEmpty &&
         !address.trimmingCharacters(in: .whitespaces).isEmpty &&
         plantHeadID != nil
     }
-
+    
     var hasChanges: Bool {
         factoryName != originalFactory.factoryName ||
         location != originalFactory.location ||
@@ -60,14 +60,14 @@ final class EditFactoryViewModel: ObservableObject {
             showAlert(with: "Failed to fetch plant heads: \(error.localizedDescription)")
         }
     }
-
+    
     func updateFactory() async {
         guard isFormValid else {
             alertMessage = "Please fill all required fields."
             showAlert = true
             return
         }
-
+        
         isLoading = true
         defer { isLoading = false }
         
@@ -75,7 +75,7 @@ final class EditFactoryViewModel: ObservableObject {
             showAlert(with: "Please select a Plant Head before updating.")
             return
         }
-
+        
         let updatedFactory = UpdateFactoryRequest(
             id: originalFactory.id,
             name: factoryName,
@@ -83,7 +83,7 @@ final class EditFactoryViewModel: ObservableObject {
             address: address,
             plantHeadID: plantHeadID
         )
-
+        
         do {
             let response = try await FactoryService.shared.updateFactory(request: updatedFactory)
             updateSuccess = response.success
@@ -97,18 +97,4 @@ final class EditFactoryViewModel: ObservableObject {
         alertMessage = message
         showAlert = true
     }
-//
-//    func toUpdatedFactory() -> Factory {
-//        Factory(
-//            id: originalFactory.id,
-//            factoryName: factoryName,
-//            location: location,
-//            plantHeadName: plantHeadName, plantHeadId: plantHeadID,
-//            totalProducts: originalFactory.totalProducts,
-//            totalTools: originalFactory.totalTools,
-//            totalWorkers: originalFactory.totalWorkers,
-//            status: originalFactory.status, address: address,
-//            chiefSupervisorName: originalFactory.chiefSupervisorName
-//        )
-//    }
 }

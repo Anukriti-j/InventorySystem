@@ -32,7 +32,7 @@ final class PlantHeadService {
         role: String,
         sortBy: String?,
         sortDirection: String?,
-        search: String?,
+        name: String?,
         statuses: String?,
     ) async throws -> GetAllPlantHeads {
         let path = pathBuilder.buildPath(
@@ -43,7 +43,7 @@ final class PlantHeadService {
                 "role": role.uppercased(),
                 "sortBy": sortBy,
                 "sortDirection": sortDirection,
-                "search": search,
+                "name": name,
                 "statuses": statuses
             ]
         )
@@ -62,5 +62,16 @@ final class PlantHeadService {
             requiresAuth: true
         )
         return try await APIClient.shared.request(endpoint: endpoint, responseType: GetPlantHeadToAssign.self)
+    }
+    
+    func loadPHFactories(request: LoadPHFactoryRequest) async throws -> LoadPHFactoryResponse {
+        let data = try JSONEncoder().encode(request)
+        let endpoint = APIEndpoint(
+            path: "\(APIConstants.baseURL)/owner/planthead/factories",
+            method: .post,
+            body: data,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: LoadPHFactoryResponse.self)
     }
 }

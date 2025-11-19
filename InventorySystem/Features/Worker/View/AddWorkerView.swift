@@ -18,8 +18,7 @@ struct AddWorkerView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Factory Information")) {
-                    
+                Section("Factory Information") {
                     if userRole == .owner {
                         Picker("Select Factory", selection: $viewModel.factoryID) {
                             Text("Select a factory").tag(0)
@@ -27,10 +26,20 @@ struct AddWorkerView: View {
                                 Text(factory.factoryName).tag(factory.id)
                             }
                         }
-                        .onChange(of: viewModel.factoryID) { _ in
+                        .onChange(of: viewModel.factoryID) { oldValue, newValue in
+                            guard newValue != oldValue, newValue != 0 else { return }
+                            viewModel.validateFactory()
                             viewModel.bays = []
                             viewModel.bayID = 0
-                            Task { await viewModel.getWorkersBay() }
+                            Task { @MainActor in
+                                await viewModel.getWorkersBay()
+                            }
+                        }
+                        
+                        if let error = viewModel.factoryError {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .font(.caption)
                         }
                     }
                     
@@ -41,30 +50,53 @@ struct AddWorkerView: View {
                                 Text(bay.bayName).tag(bay.id)
                             }
                         }
+                        .onChange(of: viewModel.bayID) { oldValue, newValue in
+                            guard newValue != oldValue, newValue != 0 else { return }
+                            viewModel.validateBay()
+                        }
+                        
+                        if let error = viewModel.bayError {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
                     }
                 }
                 
-                Section(header: Text("Worker Details")) {
-                    TextField("Name", text: $viewModel.name)
-                    TextField("Email", text: $viewModel.email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
+                Section("Worker Details") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Name", text: $viewModel.name)
+                            .autocapitalization(.words)
+                        if let error = viewModel.nameError {
+                            Text(error).foregroundColor(.red).font(.caption)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        TextField("Email", text: $viewModel.email)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                        
+                        if let error = viewModel.emailError {
+                            Text(error).foregroundColor(.red).font(.caption)
+                        }
+                    }
                 }
                 
-                Section(header: Text("Worker Image")) {
+                Section("Worker Image") {
                     AddImageView(selectedImage: $viewModel.selectedImage)
                 }
             }
             .navigationTitle("Create Worker")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Leading: Cancel button
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItemGroup(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
+                        .tint(.red)
                 }
                 
-                // Trailing: Add button
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Button {
                         Task {
                             await viewModel.addWorker()
@@ -76,21 +108,34 @@ struct AddWorkerView: View {
                     } label: {
                         if viewModel.isLoadingWorker {
                             ProgressView()
+                                .scaleEffect(0.9)
                         } else {
                             Text("Add")
                                 .fontWeight(.semibold)
                         }
                     }
-                    .disabled(viewModel.factoryID == 0 ||
-                              viewModel.bayID == 0 ||
-                              viewModel.name.trimmingCharacters(in: .whitespaces).isEmpty ||
-                              viewModel.email.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(!viewModel.isFormValid || viewModel.isLoadingWorker)
+                }
+            }
+            .disabled(viewModel.isLoadingWorker) // Prevent interaction during submit
+            .overlay {
+                if viewModel.isLoadingWorker {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .overlay {
+                            ProgressView("Creating worker...")
+                                .padding()
+                                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        }
                 }
             }
         }
         .onAppear {
+            // Only load bays if not owner AND factory is fixed
             if userRole != .owner {
-                Task { await viewModel.getWorkersBay() }
+                Task { @MainActor in
+                    await viewModel.getWorkersBay()
+                }
             }
         }
     }

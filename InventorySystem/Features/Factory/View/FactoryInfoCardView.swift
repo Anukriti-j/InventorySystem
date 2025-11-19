@@ -1,87 +1,108 @@
-import Foundation
 import SwiftUI
 
 struct FactoryInfoCardView: View {
     @Bindable var viewModel: FactoryViewModel
     let factory: Factory
-    
+    let onCardTap: () -> Void
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(factory.factoryName)
-                        .font(.system(size: 20, weight: .bold))
-                    Spacer()
-                    
-                    if factory.status.lowercased() == "active" {
-                        Button {
-                            viewModel.selectedFactory = factory
-                        } label: {
-                            Image(systemName: "pencil")
-                        }
-                        Button {
-                            viewModel.prepareDelete(factoryId: factory.id)
-                            viewModel.showDeletePopUp = true
-                            if viewModel.deleteSuccess {
-                                Task {
-                                    await viewModel.fetchFactories(reset: true)
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundStyle(.red)
-                        }
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(factory.factoryName)
+                    .font(.title3.bold())
+                    .lineLimit(1)
+
+                Spacer()
+
+                if factory.status.lowercased() == "active" {
+                    Button {
+                        viewModel.factoryToEdit = factory
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.blue)
+                            .frame(width: 36, height: 36)
+                            .background(Color.blue.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+
+                    Button {
+                        viewModel.prepareDelete(factoryId: factory.id)
+                        viewModel.showDeletePopUp = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.red)
+                            .frame(width: 36, height: 36)
+                            .background(Color.red.opacity(0.1))
+                            .clipShape(Circle())
                     }
                 }
-                
-                Text(factory.location)
-                    .font(.system(size: 13, weight: .semibold))
-                Text(factory.address)
-                    .font(.system(size: 13, weight: .semibold))
             }
-            
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(factory.location)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text(factory.address)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
             HStack {
-                Text("PlantHead")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.gray)
+                Text("PlantHead").font(.caption).foregroundColor(.gray)
                 Spacer()
                 Text(factory.plantHeadName)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.bold())
             }
+
             HStack {
-                Text("Chief Supervisor")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.gray)
+                Text("Chief Supervisor").font(.caption).foregroundColor(.gray)
                 Spacer()
                 Text(factory.chiefSupervisorName)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.bold())
             }
+
             HStack {
-                Text("Status")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.gray)
+                Text("Status").font(.caption).foregroundColor(.gray)
                 Spacer()
                 Text(factory.status)
                     .customStatusStyle(status: factory.status)
             }
-            HStack {
+
+            HStack(spacing: 30) {
                 VStack {
                     Text("Tools")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     Text("\(factory.totalTools)")
+                        .font(.title3.bold())
                 }
                 VStack {
                     Text("Products")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     Text("\(factory.totalProducts)")
+                        .font(.title3.bold())
                 }
                 VStack {
                     Text("Workers")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     Text("\(factory.totalWorkers)")
+                        .font(.title3.bold())
                 }
             }
+            .frame(maxWidth: .infinity)
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.white))
-        .shadow(color: .primaryLight.opacity(0.15), radius: 6, y: 2)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onCardTap()
+        }
     }
 }

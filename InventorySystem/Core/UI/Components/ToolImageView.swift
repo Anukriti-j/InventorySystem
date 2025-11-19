@@ -5,7 +5,7 @@ struct AddImageView: View {
     @Binding var selectedImage: UIImage?
     var urlString: String?
     @State private var isShowingImagePicker = false
-
+    
     var body: some View {
         VStack {
             ZStack(alignment: .bottomTrailing) {
@@ -27,7 +27,7 @@ struct AddImageView: View {
                                 .foregroundColor(.gray.opacity(0.6))
                         )
                 }
-
+                
                 Button {
                     isShowingImagePicker = true
                 } label: {
@@ -43,7 +43,7 @@ struct AddImageView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .shadow(radius: 3)
             .onTapGesture { isShowingImagePicker = true }
-
+            
             Text(selectedImage == nil && urlString == nil ? "Add Image" : "Change Image")
                 .font(.caption)
                 .foregroundColor(.secondary)

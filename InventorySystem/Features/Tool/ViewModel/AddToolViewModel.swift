@@ -11,20 +11,20 @@ final class AddToolViewModel: ObservableObject {
     @Published var selectedImage: UIImage?
     @Published var selectedCategoryID: Int? = nil
     @Published var categories: [ToolCategory] = []
-
+    
     @Published var isAddingNewCategory = false
-
+    
     @Published var isLoading = false
     @Published var alertMessage: String?
     @Published var showAlert = false
-
+    
     func createTool() async {
         isLoading = true
         defer { isLoading = false }
-
+        
         let categoryIDToSend = isAddingNewCategory ? nil : selectedCategoryID
         let newCategoryToSend = isAddingNewCategory ? newCategoryName : ""
-
+        
         let request = CreateToolRequest(
             name: name,
             description: description,
@@ -35,7 +35,7 @@ final class AddToolViewModel: ObservableObject {
             isExpensive: isExpensive,
             threshold: threshold
         )
-
+        
         do {
             let response = try await ToolService.shared.createTool(request: request, image: selectedImage)
             showAlert(with: "Tool created: \(response.message)")
@@ -44,7 +44,7 @@ final class AddToolViewModel: ObservableObject {
             showAlert(with: "Error: \(error.localizedDescription)")
         }
     }
-
+    
     func getCategories() async {
         do {
             let response = try await ToolService.shared.getCategories()
@@ -53,7 +53,7 @@ final class AddToolViewModel: ObservableObject {
             showAlert(with: "Error fetching categories: \(error.localizedDescription)")
         }
     }
-
+    
     private func showAlert(with message: String) {
         alertMessage = message
         showAlert = true

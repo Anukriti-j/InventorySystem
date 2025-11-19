@@ -4,7 +4,7 @@ import Kingfisher
 struct MerchandiseCardView: View {
     @Bindable var viewModel: MerchandiseViewModel
     let merchandise: Merchandise
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 16) {
@@ -24,33 +24,33 @@ struct MerchandiseCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .shadow(radius: 2)
                 
-                    
-
+                
+                
                 VStack(alignment: .leading, spacing: 6) {
                     Text(merchandise.name)
                         .font(.headline)
-
+                    
                     Label("\(merchandise.requiredPoints) pts", systemImage: "star.fill")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-
+                    
                     Label("Qty: \(merchandise.availableQuantity)", systemImage: "cube.box.fill")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-
+                    
                     Text(merchandise.stockStatus)
                         .customStatusStyle(status: merchandise.stockStatus)
                     
                     Text(merchandise.status)
                         .customStatusStyle(status: merchandise.status)
                 }
-
+                
                 Spacer()
             }
             .padding()
-
+            
             Divider()
-
+            
             HStack(spacing: 0) {
                 Button {
                     viewModel.selectedMerchandise = merchandise
@@ -61,9 +61,9 @@ struct MerchandiseCardView: View {
                 }
                 .foregroundColor(.blue)
                 .padding(.vertical, 12)
-
+                
                 Divider().frame(height: 20)
-
+                
                 Button {
                     viewModel.merchandiseToDelete = merchandise
                     viewModel.showDeleteAlert = true
@@ -78,7 +78,7 @@ struct MerchandiseCardView: View {
         .sheet(isPresented: $viewModel.showEditSheet, content: {
             if let selectedMerchandise = viewModel.selectedMerchandise {
                 EditMerchandiseView(merchandise: selectedMerchandise)
-
+                
             }
         })
         .background(Color(.systemBackground))

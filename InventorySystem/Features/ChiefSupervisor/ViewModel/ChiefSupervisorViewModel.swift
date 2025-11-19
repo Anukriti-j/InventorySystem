@@ -7,7 +7,7 @@ final class ChiefSupervisorViewModel {
     var selectedFactoryId: Int?
     
     var isLoadingSupervisor = false
-   
+    
     var showAddSupervisorSheet = false
     
     var showAlert = false
@@ -33,7 +33,7 @@ final class ChiefSupervisorViewModel {
             showAlert(with: "Failed to load supervisors: \(error.localizedDescription)")
         }
     }
-   
+    
     private func showAlert(with message: String) {
         alertMessage = message
         showAlert = true

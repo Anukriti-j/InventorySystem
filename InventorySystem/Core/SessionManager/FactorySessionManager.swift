@@ -18,7 +18,7 @@ final class FactorySessionManager {
             isLoading = false
         }
         do {
-            let response = try await PlantHeadRootService.shared.loadPHFactories(request: LoadPHFactoryRequest(plantHeadID: plantHeadID))
+            let response = try await PlantHeadService.shared.loadPHFactories(request: LoadPHFactoryRequest(plantHeadID: plantHeadID))
             if response.success {
                 if let data = response.data {
                     factories = data

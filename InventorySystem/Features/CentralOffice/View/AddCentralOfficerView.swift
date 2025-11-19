@@ -3,7 +3,7 @@ import SwiftUI
 struct AddCentralOfficerView: View {
     @StateObject private var viewModel = AddCentralOfficerViewModel()
     @Environment(\.dismiss) private var dismiss
-
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -16,7 +16,7 @@ struct AddCentralOfficerView: View {
                                 .font(.caption)
                         }
                     }
-
+                    
                     VStack(alignment: .leading, spacing: 8) {
                         COInputField(label: "Email", text: $viewModel.email)
                         if let error = viewModel.emailError {
@@ -36,7 +36,7 @@ struct AddCentralOfficerView: View {
                     }
                     .foregroundColor(.red)
                 }
-
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         if viewModel.isFormValid {
@@ -67,13 +67,13 @@ struct AddCentralOfficerView: View {
 struct COInputField: View {
     let label: String
     @Binding var text: String
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.secondary)
-
+            
             TextField("Enter \(label.lowercased())", text: $text)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()

@@ -2,27 +2,27 @@ import Foundation
 
 @MainActor
 final class AddSupervisorViewModel: ObservableObject {
-
+    
     @Published var name: String = "" {
         didSet { validateName() }
     }
-
+    
     @Published var email: String = "" {
         didSet { validateEmail() }
     }
-
+    
     @Published var nameError: String?
     @Published var emailError: String?
-
+    
     @Published var success = false
     @Published var showAlert = false
     @Published var alertMessage: String?
     @Published var createChiefResponse: CreateChiefResponse?
-
+    
     var isFormValid: Bool {
         validateName() && validateEmail()
     }
-
+    
     @discardableResult
     func validateName() -> Bool {
         if name.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -32,7 +32,7 @@ final class AddSupervisorViewModel: ObservableObject {
         nameError = nil
         return true
     }
-
+    
     @discardableResult
     func validateEmail() -> Bool {
         let trimmed = email.trimmingCharacters(in: .whitespaces)
@@ -47,7 +47,7 @@ final class AddSupervisorViewModel: ObservableObject {
         emailError = nil
         return true
     }
-
+    
     func addChiefSupervisor(factoryID: Int) async {
         let request = CreateChiefRequest(name: name, email: email, factoryID: factoryID)
         do {
@@ -58,7 +58,7 @@ final class AddSupervisorViewModel: ObservableObject {
             showAlert(with: error.localizedDescription)
         }
     }
-
+    
     private func showAlert(with message: String) {
         alertMessage = message
         showAlert = true

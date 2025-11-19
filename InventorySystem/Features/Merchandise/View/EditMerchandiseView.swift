@@ -16,7 +16,7 @@ struct EditMerchandiseView: View {
             VStack(spacing: 20) {
                 
                 AddImageView(selectedImage: $viewModel.selectedImage, urlString: viewModel.merchandiseImageURL)
-                    
+                
                 VStack(spacing: 16) {
                     TextField("Name", text: $viewModel.name)
                         .textFieldStyle(.roundedBorder)

@@ -58,7 +58,6 @@ struct DashboardContainer<Content: View>: View {
                 }
             )
             
-            // DIMMED OVERLAY
             if showMenu {
                 Color.black.opacity(0.35)
                     .ignoresSafeArea()
@@ -70,7 +69,6 @@ struct DashboardContainer<Content: View>: View {
                     .offset(x: menuWidth)
             }
             
-            // SIDE MENU
             SideMenuView(items: menuItems)
                 .frame(width: menuWidth)
                 .offset(x: showMenu ? 0 : -menuWidth)

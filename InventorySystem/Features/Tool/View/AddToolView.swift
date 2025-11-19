@@ -106,7 +106,7 @@ extension AddToolView {
                     }
                 }
             )) {
-                Text("Select a category").tag(Optional<Int>(nil)) 
+                Text("Select a category").tag(Optional<Int>(nil))
                 
                 ForEach(viewModel.categories, id: \.id) { category in
                     Text(category.categoryName)

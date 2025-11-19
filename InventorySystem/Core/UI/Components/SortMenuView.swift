@@ -7,14 +7,12 @@ struct SortMenuView: View {
     
     var body: some View {
         Menu {
-            // Clear option
             if selection != nil {
                 Button("Clear Sort") {
                     selection = nil
                 }
             }
             
-            // Sort options
             ForEach(options, id: \.self) { option in
                 Button {
                     selection = option
@@ -22,15 +20,15 @@ struct SortMenuView: View {
                     Label(
                         option,
                         systemImage: selection == option
-                            ? "largecircle.fill.circle"
-                            : "circle"
+                        ? "largecircle.fill.circle"
+                        : "circle"
                     )
                 }
             }
             
         } label: {
             HStack {
-                Text(selection ?? title)     
+                Text(selection ?? title)
                     .font(.subheadline)
                 
                 Image(systemName: "chevron.down")

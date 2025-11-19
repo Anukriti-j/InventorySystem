@@ -4,7 +4,7 @@ struct AddFactoryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var addFactoryViewModel = AddFactoryViewModel()
     @Bindable var ownerFactoryViewModel: FactoryViewModel
-
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -41,7 +41,7 @@ struct AddFactoryView: View {
         }
         .onAppear(perform: {
             Task {
-             await addFactoryViewModel.getAllPlantHeads()
+                await addFactoryViewModel.getAllPlantHeads()
             }
         })
         .alert(addFactoryViewModel.alertMessage ?? "Message", isPresented: $addFactoryViewModel.showAlert) {

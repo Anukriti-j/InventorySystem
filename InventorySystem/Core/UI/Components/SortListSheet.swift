@@ -6,7 +6,7 @@ struct SortListSheetView: View {
     @State private var selectedSort: String? = nil
     
     //MARK: pass selected sort
-    var onApply: ((String?) -> Void)?               // Pass back selected sort
+    var onApply: ((String?) -> Void)?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -48,7 +48,6 @@ struct SortListSheetView: View {
     }
 }
 
-// MARK: - Footer
 extension SortListSheetView {
     private var footerButtons: some View {
         HStack {

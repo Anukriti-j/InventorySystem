@@ -1,3 +1,4 @@
+// WorkerListView.swift
 import SwiftUI
 
 struct WorkerListView: View {
@@ -38,7 +39,6 @@ struct WorkerListView: View {
         } message: {
             Text("Are you sure you want to delete this worker?")
         }
-        
         .alert("Message", isPresented: $viewModel.showAlert) {
             Button("OK", role: .cancel) {
                 viewModel.showAlert = false
@@ -66,40 +66,30 @@ struct WorkerListView: View {
 }
 
 extension WorkerListView {
-    
     private var filterAndSortBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack {
-                if userRole == .owner {
-                    FiltersBarView(
-                        filters: [
-                            "Factory": viewModel.factories.map { $0.factoryName },
-                            "Status": ["Inactive", "Active"]
-                        ],
-                        selections: Binding(
-                            get: { viewModel.appliedFilters },
-                            set: { updated in
-                                viewModel.appliedFilters = updated
-                                Task { await viewModel.applyFilters(updated) }
-                            }
-                        )
+            LazyHStack(spacing: 12) {
+                FiltersBarView(
+                    filters: {
+                        var filters: [String: [String]] = ["Status": ["Active", "Inactive"]]
+                        if viewModel.shouldShowFactoryFilter {
+                            filters["Factory"] = viewModel.factories.map { $0.factoryName }
+                        }
+                        return filters
+                    }(),
+                    selections: Binding(
+                        get: { viewModel.appliedFilters },
+                        set: { updated in
+                            viewModel.appliedFilters = updated
+                            Task { await viewModel.applyFilters(updated) }
+                        }
                     )
-                } else if userRole == .plantHead || userRole == .chiefSupervisor {
-                    FiltersBarView(
-                        filters: [
-                            "Status": ["Inactive", "Active"]
-                        ],
-                        selections: Binding(
-                            get: { viewModel.appliedFilters },
-                            set: { updated in
-                                viewModel.appliedFilters = updated
-                                Task { await viewModel.applyFilters(updated) }
-                            }
-                        )
-                    )
+                )
+                .onChange(of: viewModel.appliedFilters) { _ in
+                    Task { await viewModel.fetchAllWorkers(reset: true) }
                 }
                 
-                Spacer()
+                Spacer(minLength: 20)
                 
                 SortMenuView(
                     title: "Sort",
@@ -116,8 +106,9 @@ extension WorkerListView {
                     )
                 )
             }
+            .padding(.horizontal)
         }
-        .frame(height: 40)
+        .frame(height: 50)
         .padding(.top, 8)
     }
     
@@ -126,21 +117,17 @@ extension WorkerListView {
             if viewModel.isLoadingWorkers && viewModel.workers.isEmpty {
                 ProgressView("Loading workers...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
             } else if viewModel.workers.isEmpty {
                 VStack(spacing: 16) {
                     Image(systemName: "person.2.slash")
                         .font(.system(size: 50))
                         .foregroundColor(.gray)
-                    
                     Text("No workers found")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    
                     Text("Try adjusting your filters or search criteria.")
                         .font(.subheadline)
                         .foregroundColor(.gray)
-                    
                     Button {
                         Task { await retryLoad() }
                     } label: {
@@ -157,20 +144,18 @@ extension WorkerListView {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
-                
             } else {
                 List {
                     ForEach(viewModel.workers) { worker in
                         WorkerInfoCardView(viewModel: viewModel, worker: worker)
-                            .listRowSeparator(Visibility.hidden)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .task {
                                 await viewModel.loadNextPageIfNeeded(currentItem: worker)
                             }
                     }
-                    
                     if viewModel.isLoadingWorkers && viewModel.currentPage < viewModel.totalPages {
-                        ProgressView("Loading more…")
+                        ProgressView("Loading more...")
                             .frame(maxWidth: .infinity)
                             .listRowSeparator(.hidden)
                     } else if viewModel.currentPage >= viewModel.totalPages {
@@ -183,9 +168,7 @@ extension WorkerListView {
                 }
                 .listStyle(.plain)
                 .refreshable {
-                    Task {
-                        await pullToRefresh()
-                    }
+                    Task { await pullToRefresh() }
                 }
             }
         }

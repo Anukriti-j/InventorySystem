@@ -57,7 +57,7 @@ final class AddMerchandiseViewModel {
             availableQuantity: availableQuantity,
             image: ""
         )
-
+        
         do {
             let response = try await MerchandiseService.shared.createMerchandise(request: request, image: selectedImage)
             showAlert(with: "\(response.message)")

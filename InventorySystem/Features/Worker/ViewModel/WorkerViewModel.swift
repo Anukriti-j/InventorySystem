@@ -1,14 +1,13 @@
 import Foundation
-import SwiftUI
 
 @MainActor
 @Observable
 final class WorkerViewModel {
-    var searchText: String = ""
-    var selectedSort: String? = nil
-    var showWorkerDetail: Bool = false
-    var showDeletePopUp: Bool = false
-    var workerIdToDelete: Int? = nil
+    var searchText = ""
+    var selectedSort: String?
+    var showWorkerDetail = false
+    var showDeletePopUp = false
+    var workerIdToDelete: Int?
     var factoryId: Int?
     var showAddSheet = false
     
@@ -29,15 +28,18 @@ final class WorkerViewModel {
     var showAlert = false
     var alertMessage: String?
     
-    private var debounceTask: Task<Void, Never>? = nil
+    private var debounceTask: Task<Void, Never>?
     let userRole: UserRole?
+    
+    var shouldShowFactoryFilter: Bool {
+        userRole == .owner && factoryId == nil
+    }
     
     init(factoryId: Int?, userRole: UserRole? = nil) {
         self.factoryId = factoryId
         self.userRole = userRole
     }
     
-    // FIXED: Only one factory filter at a time
     func fetchAllWorkers(reset: Bool = false) async {
         guard !isLoadingWorkers else { return }
         isLoadingWorkers = true
@@ -52,12 +54,9 @@ final class WorkerViewModel {
         
         do {
             let finalFactoryId: Int? = {
-                // PlantHead & ChiefSupervisor → always use their factory
                 if userRole == .plantHead || userRole == .chiefSupervisor {
                     return factoryId
                 }
-                
-                // Owner → only if EXACTLY ONE factory selected
                 if userRole == .owner {
                     let names = appliedFilters["Factory"] ?? []
                     if names.count == 1,
@@ -65,9 +64,8 @@ final class WorkerViewModel {
                        let factory = factories.first(where: { $0.factoryName == name }) {
                         return factory.id
                     }
-                    return nil  // 0 or 2+ → show all
+                    return nil
                 }
-                
                 return nil
             }()
             
@@ -84,12 +82,12 @@ final class WorkerViewModel {
                 sortBy: sortByParam,
                 sortDirection: sortDirectionParam,
                 status: statusParam,
-                factoryId: finalFactoryId,  // ← Single Int? → no crash
-                search: searchText.trimmingCharacters(in: .whitespaces).isEmpty ? nil : searchText.trimmingCharacters(in: .whitespaces)
+                factoryId: finalFactoryId,
+                search: searchText.trimmingCharacters(in: .whitespaces).isEmpty ? nil : searchText
             )
             
             totalPages = response.pagination.totalPages
-            let newItems = response.data ?? []
+            let newItems = response.data
             
             if reset {
                 workers = newItems
@@ -104,8 +102,7 @@ final class WorkerViewModel {
     }
     
     func loadNextPageIfNeeded(currentItem: Worker?) async {
-        guard let currentItem = currentItem else { return }
-        guard workers.last?.id == currentItem.id else { return }
+        guard let currentItem, workers.last?.id == currentItem.id else { return }
         guard !isLoadingWorkers, currentPage < totalPages else { return }
         await fetchAllWorkers()
     }
@@ -114,10 +111,10 @@ final class WorkerViewModel {
         debounceTask?.cancel()
         appliedFilters = filters.filter { !$0.value.isEmpty }
         
-        debounceTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300_000_000)
+        debounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
-            await self?.fetchAllWorkers(reset: true)
+            await fetchAllWorkers(reset: true)
         }
     }
     
@@ -130,10 +127,10 @@ final class WorkerViewModel {
         debounceTask?.cancel()
         searchText = newText
         
-        debounceTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300_000_000)
+        debounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
-            await self?.fetchAllWorkers(reset: true)
+            await fetchAllWorkers(reset: true)
         }
     }
     

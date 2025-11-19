@@ -8,8 +8,7 @@ struct FactoryInjectedView<Content: View>: View {
         if let factoryId = factorySessionManager.selectedFactoryID {
             content(factoryId)
         } else {
-            // Fallback: either a loading screen or redirect to factory selector
-            SelectFactoryView()  // or ProgressView() + redirect logic
+            SelectFactoryView()
         }
     }
 }

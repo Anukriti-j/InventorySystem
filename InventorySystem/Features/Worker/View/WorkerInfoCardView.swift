@@ -4,7 +4,7 @@ import Kingfisher
 struct WorkerInfoCardView: View {
     @Bindable var viewModel: WorkerViewModel
     let worker: Worker
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -31,10 +31,10 @@ struct WorkerInfoCardView: View {
                     .allowsHitTesting(true)
                 }
             }
-
+            
             RowInfoView(label: "Bay Area", value: worker.bayArea)
             RowInfoView(label: "Factory", value: worker.factoryName ?? "Not Found")
-
+            
             HStack {
                 Text("Status")
                     .foregroundColor(.gray)
@@ -58,7 +58,7 @@ struct WorkerInfoCardView: View {
 struct RowInfoView: View {
     let label: String
     let value: String
-
+    
     var body: some View {
         HStack {
             Text(label)

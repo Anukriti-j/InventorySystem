@@ -10,32 +10,34 @@ final class ToolsListViewModel {
     var showDeletePopUp = false
     var editingTool: Tool?
     private var toolIdToDelete: Int?
-
+    
     var allTools: [Tool] = []
     var factories: [Factory] = []
     var categories: [ToolCategory] = []
     var appliedFilters: [String: Set<String>] = [:]
     var selectedSort: String?
-
+    var shouldShowFactoryFilter: Bool {
+        userRole == .owner && factoryId == nil
+    }
+    
     let factoryId: Int?
     let userRole: UserRole?
-
+    
     var isLoading = false
     var currentPage = 0
     var totalPages = 1
     private let pageSize = 10
-
+    
     var showAlert = false
     var alertMessage: String?
-
+    
     private var searchDebounceTask: Task<Void, Never>?
-
+    
     init(factoryId: Int?, userRole: UserRole?) {
         self.factoryId = factoryId
         self.userRole = userRole
     }
-
-    // MARK: - Data Loading
+    
     func loadInitialData() async {
         await withTaskGroup(of: Void.self) { group in
             if userRole == .owner {
@@ -45,7 +47,7 @@ final class ToolsListViewModel {
             group.addTask { await self.fetchTools(reset: true) }
         }
     }
-
+    
     private func getFactories() async {
         do {
             let response = try await FactoryService.shared.fetchFactories(
@@ -57,7 +59,7 @@ final class ToolsListViewModel {
             showAlert(message: "Failed to load factories")
         }
     }
-
+    
     private func getCategories() async {
         do {
             let response = try await ToolService.shared.getCategories()
@@ -66,18 +68,17 @@ final class ToolsListViewModel {
             showAlert(message: "Failed to load categories")
         }
     }
-
-    // MARK: - Fetch Tools (Main API Call)
+    
     func fetchTools(reset: Bool = false) async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
-
+        
         if reset {
             allTools = []
             currentPage = 0
         }
-
+        
         let effectiveFactoryId: Int? = {
             if userRole == .plantHead || userRole == .chiefSupervisor {
                 return factoryId
@@ -93,24 +94,23 @@ final class ToolsListViewModel {
             }
             return nil
         }()
-
+        
         let categoryNames = appliedFilters["Category"]?.isEmpty == false
-            ? Array(appliedFilters["Category"]!).joined(separator: ",")
-            : nil
-
+        ? Array(appliedFilters["Category"]!).joined(separator: ",")
+        : nil
+        
         let availability: String? = {
             let set = appliedFilters["Availability"] ?? []
             if set.contains("In Stock") && !set.contains("Out of Stock") { return "InStock" }
             if set.contains("Out of Stock") && !set.contains("In Stock") { return "OutOfStock" }
             return nil
         }()
-
+        
         let (sortBy, sortDir) = mapSortToParams(selectedSort)
-
-        // SEARCH TEXT: Trimmed & sent correctly
+        
         let searchQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         let searchParam = searchQuery.isEmpty ? nil : searchQuery
-
+        
         do {
             let response = try await ToolService.shared.fetchTools(
                 factoryId: effectiveFactoryId,
@@ -122,10 +122,10 @@ final class ToolsListViewModel {
                 sortDir: sortDir,
                 search: searchParam
             )
-
+            
             totalPages = response.pagination.totalPages
             let newTools = response.data
-
+            
             if reset {
                 allTools = newTools
                 currentPage = 1
@@ -137,36 +137,34 @@ final class ToolsListViewModel {
             showAlert(message: "Cannot fetch tools: \(error.localizedDescription)")
         }
     }
-
+    
     func loadNextPageIfNeeded(currentItem: Tool) async {
         guard allTools.last?.id == currentItem.id,
               currentPage < totalPages,
               !isLoading else { return }
         await fetchTools()
     }
-
-    // MARK: - Filters & Sort
+    
     func applyFilters(_ filters: [String: Set<String>]) async {
         appliedFilters = filters.filter { !$0.value.isEmpty }
         await fetchTools(reset: true)
     }
-
+    
     func applySort(_ sort: String?) async {
         selectedSort = sort
         await fetchTools(reset: true)
     }
-
-    // MARK: - SEARCH (NOW WORKING PERFECTLY)
+    
     func updateSearchText(_ text: String) {
         searchText = text
-        searchDebounceTask?.cancel()  // Cancel previous
+        searchDebounceTask?.cancel()
         searchDebounceTask = Task {
-            try? await Task.sleep(for: .milliseconds(400))  // Smooth debounce
+            try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
             await self.fetchTools(reset: true)
         }
     }
-
+    
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
@@ -177,18 +175,17 @@ final class ToolsListViewModel {
         default:                                return (nil, nil)
         }
     }
-
-    // MARK: - Delete
+    
     func prepareDelete(toolId: Int) {
         toolIdToDelete = toolId
         showDeletePopUp = true
     }
-
+    
     func cancelDelete() {
         showDeletePopUp = false
         toolIdToDelete = nil
     }
-
+    
     func confirmDelete() async {
         guard let id = toolIdToDelete else { return }
         allTools.removeAll { $0.id == id }
@@ -200,7 +197,7 @@ final class ToolsListViewModel {
         }
         cancelDelete()
     }
-
+    
     private func showAlert(message: String) {
         alertMessage = message
         showAlert = true

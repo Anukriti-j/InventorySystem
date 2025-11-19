@@ -2,15 +2,14 @@ import SwiftUI
 
 struct FactoryView: View {
     @State private var viewModel = FactoryViewModel()
-    
+
     var body: some View {
         VStack {
             filterAndSortBar
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .animation(.spring(), value: viewModel.appliedFilters)
+
             factoryList
-                .animation(.easeInOut, value: viewModel.searchText)
-            
         }
         .navigationTitle("Factories")
         .navigationBarTitleDisplayMode(.inline)
@@ -24,56 +23,56 @@ struct FactoryView: View {
                 }
             }
         }
-        .task { await loadInitialData() }
-        
-        .alert("Alert", isPresented: $viewModel.showDeletePopUp) {
+        .task {
+            await viewModel.fetchFactories(reset: true)
+        }
+        .alert("Delete Factory", isPresented: $viewModel.showDeletePopUp) {
             Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
             Button("Delete", role: .destructive) {
                 Task { await viewModel.confirmDelete() }
             }
         } message: {
-            Text("Are you sure you want to delete the selection!")
+            Text("Are you sure you want to delete this factory?")
         }
         .navigationDestination(isPresented: $viewModel.showFactoryDetail) {
-            FactoryDetailView(factoryId: viewModel.selectedFactory?.id ?? -1)
+            if let factory = viewModel.selectedFactory {
+                FactoryDetailView(factoryId: factory.id)
+            }
         }
         .sheet(isPresented: $viewModel.showAddSheet) {
             AddFactoryView(ownerFactoryViewModel: viewModel)
         }
-        .sheet(item: $viewModel.selectedFactory) { factory in
+        .sheet(item: $viewModel.factoryToEdit) { factory in
             EditFactoryView(factory: factory, factoryViewModel: viewModel)
         }
     }
 }
 
 extension FactoryView {
-    
     private var filterAndSortBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack {
+            LazyHStack(spacing: 12) {
                 FiltersBarView(
                     filters: [
-                        "Location": ["Pune", "Mumbai", "Delhi"],
+                        "Location": ["Pune", "Mumbai", "Delhi", "Bangalore", "Chennai"],
                         "Status": ["Active", "Inactive"]
                     ],
                     selections: Binding(
                         get: { viewModel.appliedFilters },
-                        set: { updated in
-                            viewModel.appliedFilters = updated
-                            Task { await viewModel.applyFilters(updated) }
-                        }
+                        set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
                     )
                 )
-                
-                Spacer()
-                
+                .onChange(of: viewModel.appliedFilters) { _ in
+                    Task { await viewModel.applyFilters(viewModel.appliedFilters) }
+                }
+
+                Spacer(minLength: 20)
+
                 SortMenuView(
                     title: "Sort",
                     options: [
-                        "Sort by Name A-Z",
-                        "Sort by Name Z-A",
-                        "Sort by City A-Z",
-                        "Sort by City Z-A"
+                        "Sort by Name A-Z", "Sort by Name Z-A",
+                        "Sort by City A-Z", "Sort by City Z-A"
                     ],
                     selection: Binding(
                         get: { viewModel.selectedSort },
@@ -84,59 +83,54 @@ extension FactoryView {
                     )
                 )
             }
+            .padding(.horizontal)
         }
-        .frame(height: 40)
+        .frame(height: 50)
         .padding(.top, 8)
     }
-    
+
     private var factoryList: some View {
         ZStack {
             if viewModel.isLoading && viewModel.factories.isEmpty {
                 ProgressView("Loading factories...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .transition(.opacity)
-                    .animation(.easeIn, value: viewModel.isLoading)
-            } else if viewModel.factories.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "building.2")
-                        .font(.system(size: 50))
+            }
+            else if viewModel.factories.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "building.2.crop.circle")
+                        .font(.system(size: 60))
                         .foregroundColor(.gray)
                     Text("No factories found")
-                        .font(.headline)
+                        .font(.title3.bold())
+                    Text("Try adjusting filters or add a new factory")
                         .foregroundColor(.secondary)
-                    Text("Try adjusting your filters or search criteria.")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .transition(.opacity.combined(with: .scale))
-                .animation(.spring(), value: viewModel.factories.isEmpty)
-            } else {
+            }
+            else {
                 List {
                     ForEach(viewModel.factories) { factory in
-                        Button {
-                           
-                            viewModel.showFactoryDetail = true
-                        } label: {
-                            FactoryInfoCardView(
-                                viewModel: viewModel,
-                                factory: factory
-                            )
-                        }
+                        FactoryInfoCardView(
+                            viewModel: viewModel,
+                            factory: factory,
+                            onCardTap: {
+                                viewModel.selectedFactory = factory
+                                viewModel.showFactoryDetail = true
+                            }
+                        )
                         .listRowSeparator(.hidden)
                         .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
                         .task {
                             await viewModel.loadNextPageIfNeeded(currentItem: factory)
                         }
                     }
-                    
-                    if viewModel.isLoading && !viewModel.factories.isEmpty && viewModel.currentPage < viewModel.totalPages {
-                        ProgressView("Loading more…")
+
+                    if viewModel.isLoading && viewModel.currentPage < viewModel.totalPages {
+                        ProgressView("Loading more...")
                             .frame(maxWidth: .infinity)
                             .listRowSeparator(.hidden)
-                            .transition(.opacity)
-                            .animation(.easeIn, value: viewModel.isLoading)
-                    } else if !viewModel.isLoading && !viewModel.factories.isEmpty && viewModel.currentPage >= viewModel.totalPages {
+                    }
+                    else if viewModel.currentPage >= viewModel.totalPages {
                         Text("All factories loaded")
                             .font(.footnote)
                             .foregroundColor(.gray)
@@ -144,25 +138,19 @@ extension FactoryView {
                             .listRowSeparator(.hidden)
                     }
                 }
-                .animation(.easeInOut, value: viewModel.factories)
                 .listStyle(.plain)
                 .refreshable {
-                    Task {
-                        await viewModel.fetchFactories(reset: true)
-                    }
+                    await viewModel.fetchFactories(reset: true)
                 }
             }
         }
-        .searchable(text: $viewModel.searchText)
+        .searchable(text: $viewModel.searchText,
+                    placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Search factories...")
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.updateSearchText(newValue)
+        }
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
     }
-    
-    private func loadInitialData() async {
-        await viewModel.fetchFactories(reset: true)
-    }
-}
-
-struct FactoryInfoRow: Identifiable {
-    let id = UUID()
-    let label: String
-    let value: String
 }

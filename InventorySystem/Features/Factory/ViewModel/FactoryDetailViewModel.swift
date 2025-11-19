@@ -1,13 +1,13 @@
 import Foundation
+import Observation
 
 enum FactoryDetailTab: CaseIterable {
-    case workers, tools, products
+    case workers, tools
     
     var title: String {
         switch self {
         case .workers: return "Workers"
         case .tools: return "Tools"
-        case .products: return "Products"
         }
     }
 }
@@ -23,33 +23,30 @@ final class FactoryDetailViewModel {
     
     private var debounceTask: Task<Void, Never>? = nil
     
-    // Filter + Sort apply handlers
     func applyFilters(_ filters: [String: Set<String>]) async {
         debounceTask?.cancel()
         appliedFilters = filters
         
         debounceTask = Task {
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(nanoseconds: 250_000_000)
         }
     }
     
     func applySort(_ sort: String?) async {
-        selectedSort = sort
         debounceTask?.cancel()
+        selectedSort = sort
+        
+        debounceTask = Task {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+        }
+    }
+    
+    func updateSearchText(_ newValue: String) {
+        debounceTask?.cancel()
+        searchText = newValue
         
         debounceTask = Task {
             try? await Task.sleep(nanoseconds: 300_000_000)
         }
     }
-    
-    func updateSearchText(_ newValue: String, callback: @escaping () -> Void) {
-        debounceTask?.cancel()
-        searchText = newValue
-        
-        debounceTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            callback()   // child VM search trigger
-        }
-    }
 }
-

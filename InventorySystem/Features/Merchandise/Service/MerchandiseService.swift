@@ -47,11 +47,10 @@ final class MerchandiseService {
     }
     
     func updateMerchandise(request: CreateOrUpdateMerchandiseRequest, image: UIImage?) async throws -> CreateOrUpdateMerchandiseResponse {
-        let data = try JSONEncoder().encode(request)
         let path = pathBuilder.buildPath("/owner/update/merchandise")
         let boundary = UUID().uuidString
         var body = Data()
-
+        
         body.appendFormField(named: "name", value: request.name, boundary: boundary)
         body.appendFormField(named: "requiredPoints", value: "\(request.requiredPoints)", boundary: boundary)
         body.appendFormField(named: "availabelQuantity", value: "\(request.availableQuantity)", boundary: boundary)
@@ -83,7 +82,7 @@ final class MerchandiseService {
         let path = pathBuilder.buildPath("/owner/add/merchandise")
         let boundary = UUID().uuidString
         var body = Data()
-
+        
         body.appendFormField(named: "name", value: request.name, boundary: boundary)
         body.appendFormField(named: "requiredPoints", value: "\(request.requiredPoints)", boundary: boundary)
         body.appendFormField(named: "availableQuantity", value: "\(request.availableQuantity)", boundary: boundary)
@@ -110,5 +109,5 @@ final class MerchandiseService {
         
         return try await APIClient.shared.request(endpoint: endpoint, responseType: CreateOrUpdateMerchandiseResponse.self)
     }
-
+    
 }

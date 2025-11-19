@@ -48,7 +48,7 @@ struct ProductsListView: View {
             }
             
             .sheet(isPresented: $viewModel.showAddSheet) {
-                AddProductView()
+                AddProductView(parentViewModel: viewModel)
             }
             .sheet(isPresented: $viewModel.showEditSheet) {
                 if let product = viewModel.editingProduct {
@@ -59,7 +59,6 @@ struct ProductsListView: View {
     }
 }
 
-// MARK: - Extensions
 extension ProductsListView {
     private var filterAndSortBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -74,7 +73,7 @@ extension ProductsListView {
                         set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
                     )
                 )
-                .onChange(of: viewModel.appliedFilters) { _ in
+                .onChange(of: viewModel.appliedFilters) { _ , _ in
                     Task { await viewModel.applyFilters(viewModel.appliedFilters) }
                 }
                 

@@ -1,65 +1,53 @@
-import Foundation
+import SwiftUI
 
 @Observable
 final class PlantHeadListViewModel {
-    var searchText: String = ""
-    var showFilterSheet = false
-    var showSortSheet = false
+    var searchText = ""
     var showAddSheet = false
     var isLoading = false
     var plantHeads: [PlantHead] = []
     var plantheadToDelete: Int?
-    
     var currentPage = 0
     var totalPages = 1
     private let pageSize = 10
-    
     var showAlert = false
     var alertMessage: String?
     var showDeletePopUp = false
-    
     var appliedFilters: [String: Set<String>] = [:]
-    var selectedSort: String? = nil
-    
-    private var debounceTask: Task<Void, Never>? = nil
-    
+    var selectedSort: String?
+    private var debounceTask: Task<Void, Never>?
+
     func fetchPlantHeads(reset: Bool = false) async {
-        guard !isLoading else {
-            print("⏳ Skipping fetch — already loading")
-            return
-        }
-        
+        guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
-        
+
         if reset {
             plantHeads = []
             currentPage = 0
-        } else {
-            guard currentPage < totalPages else { return }
         }
+
+        let statusParam: String? = {
+            let statuses = appliedFilters["Status"] ?? []
+            return statuses.isEmpty ? nil : statuses.map { $0.lowercased() == "active" ? "ACTIVE" : "INACTIVE" }.joined(separator: ",")
+        }()
+
+        let (sortByParam, sortDirectionParam) = mapSortToParams(selectedSort)
+        let searchParam = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : searchText
+
         do {
-            let statusParam: String? = {
-                let statuses = (appliedFilters["Status"] ?? [])
-                    .map { $0.uppercased() }
-                return statuses.isEmpty ? nil : statuses.joined(separator: ",")
-            }()
-            
-            let (sortByParam, sortDirectionParam) = mapSortToParams(selectedSort)
-            let searchParam = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : searchText
-            
-            let response = try await PlantHeadService.shared.fetchPlantHeads (
+            let response = try await PlantHeadService.shared.fetchPlantHeads(
                 page: currentPage,
                 size: pageSize,
                 role: "planthead",
                 sortBy: sortByParam,
                 sortDirection: sortDirectionParam,
-                search: searchParam,
+                name: searchParam,
                 statuses: statusParam
             )
             totalPages = response.pagination.totalPages
             let newItems = response.data
-            
+
             if reset {
                 plantHeads = newItems
                 currentPage = 1
@@ -71,94 +59,66 @@ final class PlantHeadListViewModel {
             showAlert(with: "Cannot fetch PlantHeads: \(error.localizedDescription)")
         }
     }
-    
-    private func showAlert(with message: String) {
-        alertMessage = message
-        showAlert = true
-    }
-    
+
     func loadNextPageIfNeeded(currentItem: PlantHead?) async {
-        guard let currentItem = currentItem else { return }
-        guard plantHeads.last?.id == currentItem.id else { return }
-        guard !isLoading else { return }
-        guard currentPage < totalPages else { return }
+        guard let currentItem, plantHeads.last?.id == currentItem.id else { return }
+        guard currentPage < totalPages, !isLoading else { return }
         await fetchPlantHeads()
     }
-    
+
     func applyFilters(_ filters: [String: Set<String>]) async {
-        debounceTask?.cancel()
         appliedFilters = filters.filter { !$0.value.isEmpty }
-        
-        debounceTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300 * 1_000_000) // 0.3s
-            guard !Task.isCancelled else { return }
-            await self?.fetchPlantHeads(reset: true)
-        }
+        await fetchPlantHeads(reset: true)
     }
-    
+
     func applySort(_ sortOption: String?) async {
         selectedSort = sortOption
         await fetchPlantHeads(reset: true)
     }
-    
+
     func updateSearchText(_ newText: String) {
-        debounceTask?.cancel()
         searchText = newText
-        
-        // Debounce 300ms
-        debounceTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300 * 1_000_000) // 300ms
+        debounceTask?.cancel()
+        debounceTask = Task {
+            try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
-            await self?.fetchPlantHeads(reset: true)
+            await self.fetchPlantHeads(reset: true)
         }
     }
-    
+
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
-        case "Sort by Name A-Z":
-            return ("username", "asc")
-        case "Sort by Name Z-A":
-            return ("username", "desc")
-        default:
-            return (nil, nil)
+        case "Sort by Name A-Z": return ("username", "asc")
+        case "Sort by Name Z-A": return ("username", "desc")
+        default: return (nil, nil)
         }
     }
-    
+
     func prepareDelete(plantheadId: Int) {
         plantheadToDelete = plantheadId
         showDeletePopUp = true
     }
-    
+
     func cancelDelete() {
-        showAlert = false
+        showDeletePopUp = false
         plantheadToDelete = nil
     }
-    
+
     func confirmDelete() async {
         guard let id = plantheadToDelete else { return }
-        await deletePlantHead(id: id)
-        cancelDelete()
-    }
-    
-    func deletePlantHead(id: Int) async {
         plantHeads.removeAll { $0.id == id }
-        
         do {
             let response = try await CentralOfficeService.shared.deleteCentralOfficer(id: id)
             showAlert(with: response.message)
         } catch {
-            showAlert(with: "Could not delete factory: \(error.localizedDescription)")
+            showAlert(with: "Failed to delete PlantHead")
         }
+        cancelDelete()
     }
-    
-    func refreshWithoutCancel() async {
-        isLoading = false
-        plantHeads = []
-        currentPage = 1
-        totalPages = 1
-        await fetchPlantHeads(reset: true)
+
+    private func showAlert(with message: String) {
+        alertMessage = message
+        showAlert = true
     }
 }
-
-

@@ -8,17 +8,17 @@ struct ChiefSupervisorView: View {
     init(factoryId: Int) {
         _viewmodel = State(wrappedValue: ChiefSupervisorViewModel(selectedFactoryId: factoryId))
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-
+            
             Section {
                 if let supervisors = viewmodel.supervisors, !supervisors.isEmpty {
                     ForEach(supervisors) { supervisor in
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Chief Supervisor")
                                 .font(.headline)
-
+                            
                             HStack {
                                 Text("Name:").foregroundStyle(.secondaryText)
                                 Text(supervisor.name)
@@ -40,7 +40,7 @@ struct ChiefSupervisorView: View {
                     }
                     .customStyle()
                 }
-
+                
             }
         }
         .navigationTitle("Chief Supervisor")

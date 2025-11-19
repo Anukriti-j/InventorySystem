@@ -44,7 +44,6 @@ struct SideMenuView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 12)
             
-            // MENU ITEMS
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(items) { item in
@@ -89,7 +88,6 @@ struct SideMenuView: View {
             
             Spacer()
             
-            // LOGOUT BUTTON
             Divider()
                 .padding(.horizontal, 24)
             

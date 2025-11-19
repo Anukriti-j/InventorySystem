@@ -91,7 +91,7 @@ struct ToolInfoCardView: View {
                     }
                     .buttonStyle(.plain)
                     .contentShape(Rectangle())
-                } 
+                }
             }
             .padding(.top, 8)
         }

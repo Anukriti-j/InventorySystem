@@ -3,14 +3,14 @@ import SwiftUI
 struct ToolsListView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SessionManager.self) private var session
-
+    
     @State private var viewModel: ToolsListViewModel
     @State private var isRefreshing = false
-
+    
     init(factoryId: Int? = nil, userRole: UserRole?) {
         _viewModel = State(wrappedValue: ToolsListViewModel(factoryId: factoryId, userRole: userRole))
     }
-
+    
     var body: some View {
         NavigationStack {
             VStack {
@@ -40,19 +40,19 @@ struct ToolsListView: View {
                     Task { await viewModel.confirmDelete() }
                 }
             } message: { Text("Are you sure you want to delete this tool?") }
-
-            .alert(viewModel.alertMessage ?? "Error", isPresented: $viewModel.showAlert) {
-                Button("OK") { }
-            }
-
-            .sheet(isPresented: $viewModel.showAddSheet) {
-                AddToolView()
-            }
-            .sheet(isPresented: $viewModel.showEditSheet) {
-                if let tool = viewModel.editingTool {
-                    EditToolView(tool: tool)
+            
+                .alert(viewModel.alertMessage ?? "Error", isPresented: $viewModel.showAlert) {
+                    Button("OK") { }
                 }
-            }
+            
+                .sheet(isPresented: $viewModel.showAddSheet) {
+                    AddToolView()
+                }
+                .sheet(isPresented: $viewModel.showEditSheet) {
+                    if let tool = viewModel.editingTool {
+                        EditToolView(tool: tool)
+                    }
+                }
         }
     }
 }
@@ -62,40 +62,29 @@ extension ToolsListView {
     private var filterAndSortBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 12) {
-                if let role = session.user?.userRole, role == .owner {
-                    FiltersBarView(
-                        filters: [
-                            "Factory": viewModel.factories.map { $0.factoryName },
+                FiltersBarView(
+                    filters: {
+                        var filters: [String: [String]] = [
                             "Category": viewModel.categories.map { $0.categoryName },
                             "Availability": ["In Stock", "Out of Stock"]
-                        ],
-                        selections: Binding(
-                            get: { viewModel.appliedFilters },
-                            set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
-                        )
+                        ]
+                        
+                        if viewModel.shouldShowFactoryFilter {
+                            filters["Factory"] = viewModel.factories.map { $0.factoryName }
+                        }
+                        
+                        return filters
+                    }(),
+                    selections: Binding(
+                        get: { viewModel.appliedFilters },
+                        set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
                     )
-                    .onChange(of: viewModel.appliedFilters) { _ in
-                        Task { await viewModel.applyFilters(viewModel.appliedFilters) }
-                    }
-                }
-                else if let role = session.user?.userRole,
-                        role == .plantHead || role == .chiefSupervisor {
-                    FiltersBarView(
-                        filters: [
-                            "Category": viewModel.categories.map { $0.categoryName },
-                            "Availability": ["In Stock", "Out of Stock"]
-                        ],
-                        selections: Binding(
-                            get: { viewModel.appliedFilters },
-                            set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
-                        )
-                    )
-                    .onChange(of: viewModel.appliedFilters) { _ in
-                        Task { await viewModel.applyFilters(viewModel.appliedFilters) }
-                    }
+                )
+                .onChange(of: viewModel.appliedFilters) { _ in
+                    Task { await viewModel.applyFilters(viewModel.appliedFilters) }
                 }
 
-                Spacer()
+                Spacer(minLength: 20)
 
                 SortMenuView(
                     title: "Sort",
@@ -119,7 +108,7 @@ extension ToolsListView {
         .frame(height: 50)
         .padding(.top, 8)
     }
-
+    
     private var toolList: some View {
         ZStack {
             if viewModel.isLoading && viewModel.allTools.isEmpty {
@@ -144,7 +133,7 @@ extension ToolsListView {
                             .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
                             .task { await viewModel.loadNextPageIfNeeded(currentItem: tool) }
                     }
-
+                    
                     if viewModel.isLoading {
                         ProgressView("Loading more...")
                             .frame(maxWidth: .infinity)
@@ -159,11 +148,11 @@ extension ToolsListView {
             }
         }
         .searchable(text: $viewModel.searchText, prompt: "Search tools by name...")
-            .onChange(of: viewModel.searchText) { _, newValue in
-                viewModel.updateSearchText(newValue)  
-            }
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.updateSearchText(newValue)
+        }
+        .autocorrectionDisabled()
+        .textInputAutocapitalization(.never)
         .onChange(of: viewModel.searchText) { _, newValue in
             viewModel.updateSearchText(newValue)
         }

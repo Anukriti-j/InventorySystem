@@ -46,7 +46,7 @@ class SignUpViewModel {
         
         print("SignUp success")
     }
-
+    
     private func resetForm() {
         nameError = nil
         emailError = nil
