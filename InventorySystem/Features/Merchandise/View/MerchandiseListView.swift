@@ -70,8 +70,6 @@ struct MerchandiseList: View {
                             .foregroundColor(.gray.opacity(0.6))
                         Text("No Merchandise")
                             .font(.title2.bold())
-                        Text("Tap 'Add' to create your first item")
-                            .foregroundColor(.secondary)
                         Button("Retry") {
                             Task { await viewModel.fetchMerchandise(reset: true) }
                         }

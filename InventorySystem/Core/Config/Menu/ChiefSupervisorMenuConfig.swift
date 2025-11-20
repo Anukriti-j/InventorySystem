@@ -7,24 +7,24 @@ struct ChiefSupervisorMenuConfig {
                 DashboardView(userRole: .chiefSupervisor)
             }
         },
-        MenuItem(icon: "wrench.and.screwdriver", title: "Tools") {
+        MenuItem(icon: "wrench.and.screwdriver", title: "Tools Inventory") {
             FactoryInjectedView { factoryId in
                 ToolsListView(factoryId: factoryId, userRole: .chiefSupervisor)
             }
         },
-        MenuItem(icon: "building.columns", title: "Central Office Orders") {
+        MenuItem(icon: "building.columns", title: "Tools Request") {
             FactoryInjectedView { factoryId in
-                EmptyView() // handle this
+                ToolRequestView()
             }
         },
-        MenuItem(icon: "person.fill", title: "Personnel Management") {
+        MenuItem(icon: "person.fill", title: "Workers") {
             FactoryInjectedView { factoryId in
                 WorkerListView(userRole: .chiefSupervisor)
             }
         },
-        MenuItem(icon: "wrench.and.screwdriver", title: "Tools Request") {
+        MenuItem(icon: "wrench.and.screwdriver", title: "Tools Return") {
             FactoryInjectedView { factoryId in
-                EmptyView() // Handle this
+                ToolReturnView()
             }
         }
     ]

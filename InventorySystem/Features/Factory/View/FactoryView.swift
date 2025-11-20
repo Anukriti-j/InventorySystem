@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FactoryView: View {
     @State private var viewModel = FactoryViewModel()
+    @State private var isRefreshing = false
 
     var body: some View {
         VStack {
@@ -24,6 +25,7 @@ struct FactoryView: View {
             }
         }
         .task {
+            await viewModel.getLocations()
             await viewModel.fetchFactories(reset: true)
         }
         .alert("Delete Factory", isPresented: $viewModel.showDeletePopUp) {
@@ -54,7 +56,7 @@ extension FactoryView {
             LazyHStack(spacing: 12) {
                 FiltersBarView(
                     filters: [
-                        "Location": ["Pune", "Mumbai", "Delhi", "Bangalore", "Chennai"],
+                        "Location": viewModel.locations,
                         "Status": ["Active", "Inactive"]
                     ],
                     selections: Binding(
@@ -62,7 +64,7 @@ extension FactoryView {
                         set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
                     )
                 )
-                .onChange(of: viewModel.appliedFilters) { _ in
+                .onChange(of: viewModel.appliedFilters) { _, _ in
                     Task { await viewModel.applyFilters(viewModel.appliedFilters) }
                 }
 
@@ -97,15 +99,29 @@ extension FactoryView {
             }
             else if viewModel.factories.isEmpty {
                 VStack(spacing: 16) {
-                    Image(systemName: "building.2.crop.circle")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    Text("No factories found")
-                        .font(.title3.bold())
-                    Text("Try adjusting filters or add a new factory")
+                   
+                    Text("No factory found")
+                        .font(.headline)
                         .foregroundColor(.secondary)
+                    Text("Try adjusting your filters or search criteria.")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                    Button {
+                        Task { await retryLoad() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .font(.callout.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(isRefreshing)
+                    .opacity(isRefreshing ? 0.6 : 1.0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             }
             else {
                 List {
@@ -140,7 +156,7 @@ extension FactoryView {
                 }
                 .listStyle(.plain)
                 .refreshable {
-                    await viewModel.fetchFactories(reset: true)
+                    Task { await pullToRefresh() }
                 }
             }
         }
@@ -152,5 +168,15 @@ extension FactoryView {
         }
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
+    }
+    
+    private func retryLoad() async {
+        isRefreshing = true
+        await viewModel.fetchFactories(reset: true)
+        isRefreshing = false
+    }
+    
+    private func pullToRefresh() async {
+        await viewModel.refreshWithoutCancel()
     }
 }

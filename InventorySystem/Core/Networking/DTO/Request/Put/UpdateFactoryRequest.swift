@@ -10,3 +10,4 @@ struct UpdateFactoryRequest: Codable {
         case plantHeadID = "plantHeadId"
     }
 }
+

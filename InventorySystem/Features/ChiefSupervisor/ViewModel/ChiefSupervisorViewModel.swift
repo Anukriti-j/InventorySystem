@@ -18,8 +18,6 @@ final class ChiefSupervisorViewModel {
     }
     
     func getSupervisor() async {
-        print("selectedfactoryid: \(selectedFactoryId)")
-        print("func get supervisor called")
         isLoadingSupervisor = true
         defer { isLoadingSupervisor = false }
         

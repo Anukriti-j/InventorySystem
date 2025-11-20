@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CentralOfficerListView: View {
     @State private var viewModel = CentralOfficerViewModel()
+    @State private var isRefreshing = false
 
     var body: some View {
         NavigationStack {
@@ -12,11 +13,11 @@ struct CentralOfficerListView: View {
 
                 centralOfficerList
             }
-            .navigationTitle("Central Officers")
+            .navigationTitle(StringConstants.centralOfficer)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add +") {
+                    Button(StringConstants.add) {
                         viewModel.showAddSheet = true
                     }
                     .fontWeight(.semibold)
@@ -28,16 +29,16 @@ struct CentralOfficerListView: View {
             .sheet(isPresented: $viewModel.showAddSheet) {
                 AddCentralOfficerView()
             }
-            .alert("Delete Officer", isPresented: $viewModel.showDeletePopUp) {
-                Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
-                Button("Delete", role: .destructive) {
+            .alert(StringConstants.deleteOfficer, isPresented: $viewModel.showDeletePopUp) {
+                Button(StringConstants.cancel, role: .cancel) { viewModel.cancelDelete() }
+                Button(StringConstants.delete, role: .destructive) {
                     Task { await viewModel.confirmDelete() }
                 }
             } message: {
-                Text("Are you sure you want to delete this officer?")
+                Text(StringConstants.confirmDeleteOfficer)
             }
-            .alert("Message", isPresented: $viewModel.showAlert) {
-                Button("OK") {
+            .alert(StringConstants.messageTitle, isPresented: $viewModel.showAlert) {
+                Button(StringConstants.ok) {
                     viewModel.showAlert = false
                     viewModel.alertMessage = nil
                 }
@@ -91,17 +92,29 @@ extension CentralOfficerListView {
             }
             else if viewModel.centralOfficers.isEmpty {
                 VStack(spacing: 16) {
-                    Text("No Central Officers")
-                        .font(.title3)
+                   
+                    Text("No Central Officer found")
+                        .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("Tap 'Add +' to create one.")
+                    Text("Try adjusting your filters or search criteria.")
+                        .font(.subheadline)
                         .foregroundColor(.gray)
-                    Button("Retry") {
-                        Task { await viewModel.fetchCentralOfficer(reset: true) }
+                    Button {
+                        Task { await retryLoad() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .font(.callout.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .disabled(isRefreshing)
+                    .opacity(isRefreshing ? 0.6 : 1.0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             }
             else {
                 List {
@@ -129,7 +142,7 @@ extension CentralOfficerListView {
                 }
                 .listStyle(.plain)
                 .refreshable {
-                    await viewModel.fetchCentralOfficer(reset: true)
+                    Task { await pullToRefresh() }
                 }
             }
         }
@@ -141,5 +154,15 @@ extension CentralOfficerListView {
         }
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
+    }
+    
+    private func retryLoad() async {
+        isRefreshing = true
+        await viewModel.fetchCentralOfficer(reset: true)
+        isRefreshing = false
+    }
+    
+    private func pullToRefresh() async {
+        await viewModel.refreshWithoutCancel()
     }
 }

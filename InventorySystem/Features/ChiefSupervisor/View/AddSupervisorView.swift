@@ -10,7 +10,7 @@ struct AddSupervisorView: View {
             Form {
                 Section(header: Text("Chief Supervisor Details")) {
                     VStack(alignment: .leading, spacing: 6) {
-                        TextField("Name", text: $viewModel.name)
+                        TextField(StringConstants.name, text: $viewModel.name)
                             .autocapitalization(.words)
                         
                         if let error = viewModel.nameError {
@@ -21,7 +21,7 @@ struct AddSupervisorView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 6) {
-                        TextField("Email", text: $viewModel.email)
+                        TextField(StringConstants.email, text: $viewModel.email)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
                         
@@ -37,19 +37,19 @@ struct AddSupervisorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(StringConstants.cancel) { dismiss() }
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") {
+                    Button(StringConstants.save) {
                         createSupervisor()
                     }
                     .disabled(!viewModel.isFormValid)
                 }
             }
         }
-        .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
-            Button("OK") {
+        .alert(viewModel.alertMessage ?? StringConstants.messageTitle, isPresented: $viewModel.showAlert) {
+            Button(StringConstants.ok) {
                 if viewModel.success { dismiss() }
             }
         }

@@ -46,8 +46,8 @@ final class MerchandiseService {
         return try await APIClient.shared.request(endpoint: endpoint, responseType: DeleteMerchandiseResponse.self)
     }
     
-    func updateMerchandise(request: CreateOrUpdateMerchandiseRequest, image: UIImage?) async throws -> CreateOrUpdateMerchandiseResponse {
-        let path = pathBuilder.buildPath("/owner/update/merchandise")
+    func updateMerchandise(request: CreateOrUpdateMerchandiseRequest, image: UIImage?, merchandiseId: Int) async throws -> CreateOrUpdateMerchandiseResponse {
+        let path = pathBuilder.buildPath("/owner/update/merchandise/\(merchandiseId)")
         let boundary = UUID().uuidString
         var body = Data()
         

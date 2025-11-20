@@ -13,6 +13,7 @@ final class FactoryViewModel {
     var factoryIdToDelete: Int? = nil
     var selectedFactory: Factory?
     var factoryToEdit: Factory? = nil
+    var locations: [String] = []
     
     var factories: [Factory] = []
     var appliedFilters: [String: Set<String>] = [:]
@@ -27,6 +28,17 @@ final class FactoryViewModel {
     
     private var debounceTask: Task<Void, Never>? = nil
     private let pageSize = 10
+    
+    func getLocations() async {
+        do {
+            let response = try await FactoryService.shared.getLocations()
+            if response.success {
+                locations = response.data
+            }
+        } catch {
+            showAlert(with: "Cannot fetch locations: \(error)")
+        }
+    }
     
     func fetchFactories(reset: Bool = false) async {
         guard !isLoading else { return }
@@ -81,6 +93,14 @@ final class FactoryViewModel {
         } catch {
             showAlert(with: "Cannot fetch factories: \(error.localizedDescription)")
         }
+    }
+    
+    func refreshWithoutCancel() async {
+        factories = []
+        currentPage = 0
+        totalPages = 1
+        isLoading = false
+        await fetchFactories(reset: true)
     }
     
     func loadNextPageIfNeeded(currentItem: Factory?) async {

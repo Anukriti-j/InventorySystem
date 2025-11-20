@@ -125,4 +125,12 @@ final class CentralOfficerViewModel {
         alertMessage = message
         showAlert = true
     }
+    
+    func refreshWithoutCancel() async {
+        centralOfficers = []
+        currentPage = 0
+        totalPages = 1
+        isLoading = false
+        await fetchCentralOfficer(reset: true)
+    }
 }

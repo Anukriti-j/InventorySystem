@@ -80,9 +80,13 @@ final class ToolsListViewModel {
         }
         
         let effectiveFactoryId: Int? = {
+            if let factoryId = factoryId {
+                return factoryId
+            }
             if userRole == .plantHead || userRole == .chiefSupervisor {
                 return factoryId
             }
+            
             if userRole == .owner {
                 let names = appliedFilters["Factory"] ?? []
                 if names.count == 1,
@@ -92,12 +96,18 @@ final class ToolsListViewModel {
                 }
                 return nil
             }
+            
             return nil
         }()
-        
+
         let categoryNames = appliedFilters["Category"]?.isEmpty == false
         ? Array(appliedFilters["Category"]!).joined(separator: ",")
         : nil
+        
+        let statusParam: String? = {
+            let statuses = appliedFilters["Status"] ?? []
+            return statuses.isEmpty ? nil : statuses.map { $0.lowercased() == "active" ? "ACTIVE" : "INACTIVE" }.joined(separator: ",")
+        }()
         
         let availability: String? = {
             let set = appliedFilters["Availability"] ?? []
@@ -116,6 +126,7 @@ final class ToolsListViewModel {
                 factoryId: effectiveFactoryId,
                 categoryNames: categoryNames,
                 availability: availability,
+                status: statusParam,
                 page: currentPage,
                 size: pageSize,
                 sortBy: sortBy,
@@ -202,4 +213,13 @@ final class ToolsListViewModel {
         alertMessage = message
         showAlert = true
     }
+    
+    func refreshWithoutCancel() async {
+        allTools = []
+        currentPage = 0
+        totalPages = 1
+        isLoading = false
+        await fetchTools(reset: true)
+    }
+    
 }

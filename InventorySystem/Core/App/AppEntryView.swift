@@ -5,13 +5,13 @@ struct AppEntryView: View {
     @Environment(FactorySessionManager.self) var factorySessionManager
     
     var body: some View {
-            Group {
-                if !manager.isLoggedIn {
-                    LoginView()
-                } else {
-                    dashboardViewForRole()
-                }
+        Group {
+            if !manager.isLoggedIn {
+                LoginView()
+            } else {
+                dashboardViewForRole()
             }
+        }
     }
 }
 
@@ -34,7 +34,7 @@ extension AppEntryView {
             
         case .chiefSupervisor:
             if let factoryId = factorySessionManager.selectedFactoryID {
-                DashboardContainer(menuItems: PlantHeadMenuConfig.items) {
+                DashboardContainer(menuItems: ChiefSupervisorMenuConfig.items) {
                     DashboardView(userRole: .chiefSupervisor)
                 }
             } else {

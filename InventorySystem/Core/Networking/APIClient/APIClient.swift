@@ -25,12 +25,12 @@ final class APIClient: NetworkingProtocol {
         }
         
         guard (200..<300).contains(httpResponse.statusCode) else {
-                if let errorDTO = try? JSONDecoder().decode(ErrorResponseDTO.self, from: data) {
-                    throw APIError.serverError(message: errorDTO.message)
-                }
-                throw APIError.serverError(message: "Unexpected server error")
+            if let errorDTO = try? JSONDecoder().decode(UnifiedErrorResponse.self, from: data) {
+                throw APIError.serverError(message: errorDTO.readableMessage)
             }
-        
+            throw APIError.serverError(message: "Unexpected server error")
+        }
+
         do {
             let decoded = try JSONDecoder().decode(responseType, from: data)
             return decoded

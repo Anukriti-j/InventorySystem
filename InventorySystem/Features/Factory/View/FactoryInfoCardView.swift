@@ -19,24 +19,18 @@ struct FactoryInfoCardView: View {
                         viewModel.factoryToEdit = factory
                     } label: {
                         Image(systemName: "pencil")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.blue)
-                            .frame(width: 36, height: 36)
-                            .background(Color.blue.opacity(0.1))
-                            .clipShape(Circle())
+                            .customEditButtonStyle()
                     }
+                    .buttonStyle(.plain)
 
                     Button {
                         viewModel.prepareDelete(factoryId: factory.id)
                         viewModel.showDeletePopUp = true
                     } label: {
                         Image(systemName: "trash")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.red)
-                            .frame(width: 36, height: 36)
-                            .background(Color.red.opacity(0.1))
-                            .clipShape(Circle())
+                            .customDeleteButtonStyle()
                     }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -96,13 +90,12 @@ struct FactoryInfoCardView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .padding(16)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
-        .contentShape(Rectangle())
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)).shadow(radius: 6))
+        .padding(.horizontal, 12)
         .onTapGesture {
             onCardTap()
         }
+        .allowsHitTesting(true)
     }
 }

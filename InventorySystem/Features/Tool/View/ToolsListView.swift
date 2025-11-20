@@ -17,14 +17,16 @@ struct ToolsListView: View {
                 filterAndSortBar
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .animation(.spring(), value: viewModel.appliedFilters)
+                
                 toolList
             }
             .navigationTitle("Tools")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if let role = session.user?.userRole,
-                       role == .owner || role == .plantHead {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if viewModel.factoryId == nil,
+                       let role = session.user?.userRole,
+                       (role == .owner || role == .plantHead) {
                         Button("Add +") {
                             viewModel.showAddSheet = true
                         }
@@ -33,32 +35,34 @@ struct ToolsListView: View {
                 }
             }
             .task { await viewModel.loadInitialData() }
-            .refreshable { await viewModel.fetchTools(reset: true) }
+            .refreshable {
+                Task { await pullToRefresh() }
+            }
             .alert("Delete Tool", isPresented: $viewModel.showDeletePopUp) {
                 Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
                 Button("Delete", role: .destructive) {
                     Task { await viewModel.confirmDelete() }
                 }
-            } message: { Text("Are you sure you want to delete this tool?") }
-            
-                .alert(viewModel.alertMessage ?? "Error", isPresented: $viewModel.showAlert) {
-                    Button("OK") { }
+            } message: {
+                Text("Are you sure you want to delete this tool?")
+            }
+            .alert(viewModel.alertMessage ?? "Error", isPresented: $viewModel.showAlert) {
+                Button("OK") { }
+            }
+            .sheet(isPresented: $viewModel.showAddSheet) {
+                AddToolView(parentViewModel: viewModel)
+            }
+            .sheet(isPresented: $viewModel.showEditSheet) {
+                if let tool = viewModel.editingTool {
+                    EditToolView(tool: tool, parentViewModel: viewModel)
                 }
-            
-                .sheet(isPresented: $viewModel.showAddSheet) {
-                    AddToolView()
-                }
-                .sheet(isPresented: $viewModel.showEditSheet) {
-                    if let tool = viewModel.editingTool {
-                        EditToolView(tool: tool)
-                    }
-                }
+            }
         }
     }
 }
 
-// MARK: - Extensions
 extension ToolsListView {
+    
     private var filterAndSortBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 12) {
@@ -66,13 +70,12 @@ extension ToolsListView {
                     filters: {
                         var filters: [String: [String]] = [
                             "Category": viewModel.categories.map { $0.categoryName },
-                            "Availability": ["In Stock", "Out of Stock"]
+                            "Availability": ["In Stock", "Out of Stock"],
+                            "Status": ["Active", "InActive"]
                         ]
-                        
                         if viewModel.shouldShowFactoryFilter {
                             filters["Factory"] = viewModel.factories.map { $0.factoryName }
                         }
-                        
                         return filters
                     }(),
                     selections: Binding(
@@ -80,12 +83,12 @@ extension ToolsListView {
                         set: { viewModel.appliedFilters = $0.filter { !$0.value.isEmpty } }
                     )
                 )
-                .onChange(of: viewModel.appliedFilters) { _ in
+                .onChange(of: viewModel.appliedFilters) { _, _ in
                     Task { await viewModel.applyFilters(viewModel.appliedFilters) }
                 }
-
+                
                 Spacer(minLength: 20)
-
+                
                 SortMenuView(
                     title: "Sort",
                     options: [
@@ -116,25 +119,46 @@ extension ToolsListView {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.allTools.isEmpty {
                 VStack(spacing: 16) {
-                    Image(systemName: "wrench.and.screwdriver.fill")
-                        .font(.system(size: 60))
+                    Image(systemName: "wrench.and.screwdriver")
+                        .font(.system(size: 50))
                         .foregroundColor(.gray)
-                    Text("No tools found")
-                        .font(.title3.bold())
-                    Text("Try adjusting filters or search")
+                    
+                    Text("No Tools found")
+                        .font(.headline)
                         .foregroundColor(.secondary)
+                    
+                    Text("Try adjusting your filters or search criteria.")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                    
+                    Button {
+                        Task { await retryLoad() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .font(.callout.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(isRefreshing)
+                    .opacity(isRefreshing ? 0.6 : 1.0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             } else {
                 List {
                     ForEach(viewModel.allTools) { tool in
                         ToolInfoCardView(viewModel: viewModel, tool: tool)
                             .listRowSeparator(.hidden)
                             .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
-                            .task { await viewModel.loadNextPageIfNeeded(currentItem: tool) }
+                            .task {
+                                await viewModel.loadNextPageIfNeeded(currentItem: tool)
+                            }
                     }
                     
-                    if viewModel.isLoading {
+                    if viewModel.isLoading && viewModel.currentPage < viewModel.totalPages {
                         ProgressView("Loading more...")
                             .frame(maxWidth: .infinity)
                     } else if viewModel.currentPage >= viewModel.totalPages {
@@ -153,10 +177,15 @@ extension ToolsListView {
         }
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.updateSearchText(newValue)
-        }
-        .autocorrectionDisabled()
-        .textInputAutocapitalization(.never)
+    }
+    
+    private func retryLoad() async {
+        isRefreshing = true
+        await viewModel.fetchTools(reset: true)
+        isRefreshing = false
+    }
+    
+    private func pullToRefresh() async {
+        await viewModel.refreshWithoutCancel()
     }
 }

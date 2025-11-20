@@ -7,7 +7,6 @@ struct ToolInfoCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            
             HStack(alignment: .top, spacing: 16) {
                 KFImage(URL(string: tool.imageURL))
                     .placeholder {
@@ -25,56 +24,61 @@ struct ToolInfoCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .shadow(radius: 2)
                 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(tool.name)
                         .font(.headline)
                         .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     Text(tool.description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     Text(tool.categoryName)
                         .font(.caption)
-                        .foregroundColor(.purple)
+                        .foregroundColor(.primary)
+                    
+                    Text("Expensive: \(tool.isExpensive)")
+                        .font(.caption)
+                        .foregroundColor(.primary)
+                    
+                    Text("Perishable: \(tool.isPerishable)")
+                        .font(.caption)
+                        .foregroundColor(.primary)
                 }
+                .alignmentGuide(.top) { _ in 0 } // force alignment at top
             }
             
             Divider()
             
-            HStack(spacing: 20) {
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], alignment: .center, spacing: 12) {
                 infoItem(title: "Available", value: "\(tool.availableQuantity)")
                 infoItem(title: "Total", value: "\(tool.totalQuantity)")
                 infoItem(title: "Threshold", value: "\(tool.threshold)")
-                infoItem(title: "Expensive", value: tool.isExpensive == "true" ? "Yes" : "No")
-                infoItem(title: "Perishable", value: tool.isPerishable == "true" ? "Yes" : "No")
             }
-            .font(.caption)
-            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity)
             
             Divider()
             
-            HStack {
+            HStack(alignment: .center) {
                 if tool.status.lowercased() == "active" {
                     Button(role: .destructive) {
                         viewModel.prepareDelete(toolId: tool.id)
                     } label: {
                         Image(systemName: "trash")
-                            .font(.title3)
-                            .foregroundColor(.red)
-                            .frame(width: 44, height: 44)
+                            .customDeleteButtonStyle()
                     }
                     .buttonStyle(.plain)
-                    .contentShape(Rectangle())
                     
                     Spacer()
-                }
-                
-                Text(tool.status)
-                    .customStatusStyle(status: tool.status)
-                
-                if tool.status.lowercased() == "active" {
+                    
+                    Text(tool.status)
+                        .customStatusStyle(status: tool.status)
                     Text(tool.stockStatus)
                         .customStatusStyle(status: tool.stockStatus)
                     
@@ -85,37 +89,33 @@ struct ToolInfoCardView: View {
                         viewModel.showEditSheet = true
                     } label: {
                         Image(systemName: "pencil")
-                            .font(.title3)
-                            .foregroundColor(.purple)
-                            .frame(width: 44, height: 44)
+                            .customEditButtonStyle()
                     }
                     .buttonStyle(.plain)
-                    .contentShape(Rectangle())
+                }
+                
+                if tool.status.lowercased() == "inactive" {
+                    Text(tool.status)
+                        .customStatusStyle(status: tool.status)
                 }
             }
             .padding(.top, 8)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
-        )
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)).shadow(radius: 6))
         .padding(.horizontal, 12)
-        .contentShape(RoundedRectangle(cornerRadius: 16))
-        .onTapGesture {}
     }
     
     private func infoItem(title: String, value: String) -> some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 4) {
             Text(title)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(.secondary)
             Text(value)
                 .font(.caption)
-                .fontWeight(.medium)
+                .fontWeight(.semibold)
                 .foregroundColor(.primary)
+                .frame(maxWidth: .infinity)
         }
     }
 }

@@ -161,4 +161,13 @@ final class ProductsViewModel {
         alertMessage = message
         showAlert = true
     }
+    
+    func refreshWithoutCancel() async {
+        products = []
+        currentPage = 0
+        totalPages = 1
+        isLoading = false
+        await fetchProducts(reset: true)
+    }
+    
 }

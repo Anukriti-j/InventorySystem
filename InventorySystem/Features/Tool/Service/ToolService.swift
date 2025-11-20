@@ -11,6 +11,7 @@ final class ToolService {
         factoryId: Int? = nil,
         categoryNames: String? = nil,
         availability: String? = nil,
+        status: String? = nil,
         page: Int,
         size: Int,
         sortBy: String? = nil,
@@ -22,6 +23,7 @@ final class ToolService {
             "factoryId": factoryId.map { "\($0)" },
             "categoryNames": categoryNames,
             "availability": availability,
+            "status": status,
             "page": "\(page)",
             "size": "\(size)",
             "sortBy": sortBy,
@@ -115,7 +117,6 @@ final class ToolService {
         body.appendFormField(named: "isPerishable", value: request.isPerishable, boundary: boundary)
         body.appendFormField(named: "isExpensive", value: request.isExpensive, boundary: boundary)
         body.appendFormField(named: "threshold", value: String(request.threshold), boundary: boundary)
-        body.appendFormField(named: "availableQuantity", value: String(request.availableQuantity), boundary: boundary)
         
         if let image = image, let imageData = image.jpegData(compressionQuality: 0.8) {
             body.appendFileField(

@@ -2,10 +2,12 @@ import Foundation
 
 @MainActor
 class AddPlantHeadViewModel: ObservableObject {
-
+    
     @Published var name: String = ""
     @Published var email: String = ""
     @Published var success: Bool = false
+    @Published var isLoadingFactories = false
+    @Published var isCreating = false
     
     @Published var createPHResponse: CreatePHResponse?
     @Published var unassignedFactories: [GetUnassignedFactoryData] = []
@@ -36,11 +38,11 @@ class AddPlantHeadViewModel: ObservableObject {
         return isValid
     }
     
-    deinit {
-        print("#### viewmodel deinit")
-    }
-
     func getUnassignedFactories() async {
+        isLoadingFactories = true
+        defer {
+            isLoadingFactories = false
+        }
         do {
             let response = try await PlantHeadService.shared.getUnassignedFactory()
             getFactoryResponse = response
@@ -55,22 +57,28 @@ class AddPlantHeadViewModel: ObservableObject {
         }
     }
     
-    func createPlantHead(factoryID: Int) async {
+    func createPlantHead(factoryID: Int? = nil) async {
+        isCreating = true
+        defer {
+            isCreating = false
+        }
         do {
-            createPHResponse = try await PlantHeadService.shared.createPlantHead(
-                request: CreatePHRequest(
+            let response = try await PlantHeadService.shared.createPlantHead(
+                request: CreatePlantHeadRequest(
                     username: name,
                     email: email,
-                    factoryID: factoryID
+                    factoryId: factoryID
                 )
             )
-            success = createPHResponse?.success ?? false // check for this value false
-            alertMessage = createPHResponse?.message ?? "Unknown response"
-            showAlert = true
+            success = response.success
+            showAlert(with: response.message)
         } catch {
-            success = false
-            alertMessage = "An error occurred: \(error.localizedDescription)"
-            showAlert = true
+            showAlert(with: "An error occurred: \(error.localizedDescription)")
         }
+    }
+    
+    private func showAlert(with message: String) {
+        alertMessage = message
+        showAlert = true
     }
 }

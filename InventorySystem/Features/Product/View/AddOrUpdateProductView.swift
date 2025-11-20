@@ -1,12 +1,21 @@
 import SwiftUI
 
-struct AddProductView: View {
-    @StateObject private var viewModel = AddProductViewModel()
+enum Mode {
+    case add, edit
+}
+
+struct AddOrUpdateProductView: View {
+    @StateObject private var viewModel: AddOrUpdateProductViewModel
     @Environment(\.dismiss) private var dismiss
     let parentViewModel: ProductsViewModel
+    let mode: Mode
+    let product: Product?
     
-    init(parentViewModel: ProductsViewModel) {
+    init(parentViewModel: ProductsViewModel, mode: Mode, product: Product? = nil) {
+        self.mode = mode
+        self.product = product
         self.parentViewModel = parentViewModel
+        _viewModel = StateObject(wrappedValue: AddOrUpdateProductViewModel())
     }
     
     var body: some View {
@@ -58,36 +67,38 @@ struct AddProductView: View {
                     
                     Button {
                         Task {
-                            await viewModel.createProduct()
+                            switch mode {
+                            case .add:
+                                await viewModel.createOrUpdateProduct(productId: product?.id, mode: .add)
+                            case .edit:
+                                await viewModel.createOrUpdateProduct(productId: product?.id, mode: .edit)
+                            }
                             if viewModel.success {
                                 await parentViewModel.fetchProducts(reset: true)
                             }
                         }
-                        
                     } label: {
                         if viewModel.isLoading {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.gray)
-                                .cornerRadius(10)
+                                .tint(.white)
                         } else {
-                            Text("Create Product")
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(viewModel.isFormValid ? Color.purple : Color.gray)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+                            switch mode {
+                            case .add:
+                                Text("Create Product")
+                                    .foregroundColor(.white)
+                            case .edit:
+                                Text("Update Product")
+                                    .foregroundColor(.white)
+                            }
                         }
                     }
+                    .customStyle(isDisabled: !viewModel.isFormValid)
                     .padding(.horizontal)
                     .disabled(!viewModel.isFormValid)
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Add Product")
+            .navigationTitle(mode == .add ? "Add Product": "Edit Product")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -95,8 +106,8 @@ struct AddProductView: View {
                         .foregroundColor(.red)
                 }
             }
-            .alert("Product Creation", isPresented: $viewModel.showAlert) {
-                Button("OK") {
+            .alert(StringConstants.messageTitle, isPresented: $viewModel.showAlert) {
+                Button(StringConstants.ok) {
                     if viewModel.success { dismiss() }
                 }
             } message: {

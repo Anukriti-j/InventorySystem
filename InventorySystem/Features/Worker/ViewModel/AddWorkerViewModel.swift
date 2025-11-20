@@ -1,61 +1,55 @@
+import Foundation
 import SwiftUI
 
 @MainActor
 @Observable
 final class AddWorkerViewModel {
     
-    var factoryID: Int = 0 { didSet { validateFactory() } }
-    var name: String = "" { didSet { validateName() } }
-    var email: String = "" { didSet { validateEmail() } }
-    var bayID: Int = 0 { didSet { validateBay() } }
-    
-    var bays: [Bay] = []
+    var factoryID: Int = 0
+    var name: String = ""
+    var email: String = ""
+    var bayID: Int = 0
     var selectedImage: UIImage?
-    
-    var nameError: String?
-    var emailError: String?
-    var factoryError: String?
-    var bayError: String?
+    var bays: [Bay] = []
     
     var isLoadingWorker = false
     var showAlert = false
-    var alertMessage = ""
+    var alertMessage: String?
     var success = false
     
     init(factoryId: Int?) {
         self.factoryID = factoryId ?? 0
-        validateFactory()
+    }
+    
+    var nameError: String? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "Name is required" }
+        if trimmed.count < 3 { return "Name must be at least 3 characters" }
+        return nil
+    }
+    
+    var emailError: String? {
+        let trimmed = email.trimmingCharacters(in: .whitespaces).lowercased()
+        if trimmed.isEmpty { return "Email is required" }
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let predicate = NSPredicate(format:"SELF MATCHES %@", emailRegex)
+        return predicate.evaluate(with: trimmed) ? nil : "Enter a valid email address"
+    }
+    
+    var factoryError: String? {
+        factoryID == 0 ? "Please select a factory" : nil
+    }
+    
+    var bayError: String? {
+        bayID == 0 ? "Please select a bay" : nil
     }
     
     var isFormValid: Bool {
         nameError == nil &&
         emailError == nil &&
         factoryError == nil &&
-        bayError == nil
-    }
-    
-    func validateName() {
-        nameError = name.trimmingCharacters(in: .whitespaces).isEmpty
-        ? "Name is required"
-        : nil
-    }
-    
-    func validateEmail() {
-        if email.isEmpty {
-            emailError = "Email is required"
-        } else if !email.contains("@") || !email.contains(".") {
-            emailError = "Enter a valid email"
-        } else {
-            emailError = nil
-        }
-    }
-    
-    func validateFactory() {
-        factoryError = factoryID == 0 ? "Please select a factory" : nil
-    }
-    
-    func validateBay() {
-        bayError = bayID == 0 ? "Please select a bay" : nil
+        bayError == nil &&
+        !isLoadingWorker
     }
     
     func addWorker() async {
@@ -66,8 +60,8 @@ final class AddWorkerViewModel {
         
         let request = CreateWorkerRequest(
             factoryID: factoryID,
-            name: name,
-            email: email,
+            name: name.trimmingCharacters(in: .whitespaces),
+            email: email.trimmingCharacters(in: .whitespaces).lowercased(),
             bayID: bayID,
             image: ""
         )
@@ -75,9 +69,10 @@ final class AddWorkerViewModel {
         do {
             let response = try await WorkerService.shared.createWorker(request: request, image: selectedImage)
             success = response.success
-            showAlert(with: response.message)
+            showAlert(with: response.success ? "Worker added successfully!" : response.message)
+            if success { resetForm() }
         } catch {
-            showAlert(with: "Cannot add worker: \(error.localizedDescription)")
+            showAlert(with: "Failed to add worker: \(error.localizedDescription)")
         }
     }
     
@@ -92,12 +87,19 @@ final class AddWorkerViewModel {
             bays = response.data ?? []
         } catch {
             bays = []
-            showAlert(with: "Cannot fetch bays: \(error.localizedDescription)")
+            showAlert(with: "Failed to load bays")
         }
     }
     
     private func showAlert(with message: String) {
         alertMessage = message
         showAlert = true
+    }
+    
+    private func resetForm() {
+        name = ""
+        email = ""
+        bayID = 0
+        selectedImage = nil
     }
 }

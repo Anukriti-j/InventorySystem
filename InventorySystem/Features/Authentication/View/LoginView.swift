@@ -10,13 +10,13 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Text("Log In")
+                Text(StringConstants.login)
                     .font(.system(size: 30, weight: .bold))
                     .padding()
                 
                 VStack(alignment: .leading, spacing: 8) {
                     InputField(
-                        label: "Email",
+                        label: StringConstants.email,
                         text: $viewModel.email,
                         focusedField: $focusedField,
                         field: Field.email
@@ -31,7 +31,7 @@ struct LoginView: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     SecureInputField(
-                        label: "Password",
+                        label: StringConstants.password,
                         text: $viewModel.password,
                         focusedField: $focusedField,
                         field: Field.password
@@ -56,16 +56,16 @@ struct LoginView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Text("Login")
+                        Text(StringConstants.login)
                             .foregroundColor(Color.text)
                     }
                 }
                 .customStyle()
                 
                 HStack {
-                    Text("Don't have an account? ")
+                    Text(StringConstants.notRegistered)
                     
-                    NavigationLink("Sign Up") {
+                    NavigationLink(StringConstants.signUp) {
                         SignUpView()
                     }
                 }
@@ -78,8 +78,8 @@ struct LoginView: View {
         .onChange(of: focusedField) { _, newValue in
             viewModel.shouldFocusField = newValue
         }
-        .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
-            Button("OK", role: .cancel, action: {}) }
+        .alert(viewModel.alertMessage ?? StringConstants.messageTitle, isPresented: $viewModel.showAlert) {
+            Button(StringConstants.ok, role: .cancel, action: {}) }
     }
 }
 

@@ -20,19 +20,22 @@ struct ChiefSupervisorView: View {
                                 .font(.headline)
                             
                             HStack {
-                                Text("Name:").foregroundStyle(.secondaryText)
+                                Text(StringConstants.name).foregroundStyle(.secondaryText)
+                                Spacer()
                                 Text(supervisor.name)
                             }
                             HStack {
-                                Text("Email:").foregroundStyle(.secondaryText)
+                                Text(StringConstants.email).foregroundStyle(.secondaryText)
+                                Spacer()
                                 Text(supervisor.email)
                             }
                             HStack {
-                                Text("Active:").foregroundStyle(.secondaryText)
+                                Text(StringConstants.active).foregroundStyle(.secondaryText)
+                                Spacer()
                                 Text(supervisor.isActive)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(8)
                     }
                 } else {
                     Button("Add Chief Supervisor") {
@@ -43,7 +46,7 @@ struct ChiefSupervisorView: View {
                 
             }
         }
-        .navigationTitle("Chief Supervisor")
+        .navigationTitle(StringConstants.chiefSupervisor)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             Task {
@@ -54,7 +57,7 @@ struct ChiefSupervisorView: View {
             AddSupervisorView(parentViewModel: viewmodel)
         }
         .alert(viewmodel.alertMessage, isPresented: $viewmodel.showAlert) {
-            Button("OK", role: .cancel) {}
+            Button(StringConstants.ok, role: .cancel) {}
         }
     }
 }

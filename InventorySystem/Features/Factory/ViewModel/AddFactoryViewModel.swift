@@ -2,78 +2,97 @@ import Foundation
 
 @Observable
 final class AddFactoryViewModel {
-    var name: String = ""
-    var city: String = ""
-    var address: String = ""
-    var plantHeadID: Int?
-    
-    var createFactoryResponse: CreateFactoryResponse?
+    var name = ""
+    var city = ""
+    var address = ""
+    var plantHeadID: Int? = nil
+
     var plantHeadsList: [PlantHeadData] = []
-    
-    var showAlert: Bool = false
-    var alertMessage: String?
-    var success: Bool = false
     var isFetchingPlantHeads = false
     var isSavingFactory = false
-    
+    var showAlert = false
+    var alertMessage = ""
+    var success = false
+
     var activePlantHeads: [PlantHeadData] {
-        plantHeadsList.filter { $0.isActive == "ACTIVE" }
+        plantHeadsList.filter { $0.isActive.uppercased() == "ACTIVE" }
     }
-    
+
+    var nameError: String? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "Factory name is required" }
+        if trimmed.count < 3 { return "Name must be at least 3 characters" }
+        return nil
+    }
+
+    var cityError: String? {
+        let trimmed = city.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "City is required" }
+        if trimmed.count < 3 { return "City must be at least 3 characters" }
+        return nil
+    }
+
+    var addressError: String? {
+        let trimmed = address.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "Address is required" }
+        if trimmed.count < 5 { return "Address must be at least 5 characters" }
+        return nil
+    }
+
     var isFormValid: Bool {
-        !name.isEmpty && !city.isEmpty && !address.isEmpty
+        nameError == nil &&
+        cityError == nil &&
+        addressError == nil &&
+        !isSavingFactory
     }
-    
+
     func getAllPlantHeads() async {
         isFetchingPlantHeads = true
-        print("fetching plant heads")
         defer { isFetchingPlantHeads = false }
+
         do {
             let response = try await PlantHeadService.shared.getAllPlantHeads()
-            print(response)
-            if response.success, !response.data.isEmpty {
-                plantHeadsList = response.data
-            } else {
-                plantHeadsList = [PlantHeadData(id: 0, username: "No Plant Head Found", isActive: "No")]
+            plantHeadsList = response.success ? response.data : []
+            if plantHeadsList.isEmpty {
+                plantHeadsList = [PlantHeadData(id: -1, username: "No plant heads available", isActive: "INACTIVE")]
             }
         } catch {
-            showAlert(with: "Failed to fetch plant heads: \(error.localizedDescription)")
+            showAlert(message: "Failed to load plant heads")
         }
     }
-    
+
     func createFactory() async {
+        guard isFormValid else { return }
+
         isSavingFactory = true
         defer { isSavingFactory = false }
+
         let request = CreateFactoryRequest(
-            name: name,
-            city: city,
-            address: address,
-            plantHeadID: plantHeadID ?? 0
+            name: name.trimmingCharacters(in: .whitespaces),
+            city: city.trimmingCharacters(in: .whitespaces),
+            address: address.trimmingCharacters(in: .whitespaces),
+            plantHeadId: plantHeadID ?? nil
         )
-        
+
         do {
             let response = try await FactoryService.shared.createFactory(request: request)
-            alertMessage = createFactoryResponse?.message
             success = response.success
-            showAlert(with: response.message)
-            
-            if success {
-                resetForm()
-            }
+            showAlert(message: response.success ? "Factory created successfully!" : response.message)
+            if success { resetForm() }
         } catch {
-            showAlert(with: "Failed to create factory: \(error.localizedDescription)")
+            showAlert(message: "Failed to create factory: \(error.localizedDescription)")
         }
     }
-    
+
+    private func showAlert(message: String) {
+        alertMessage = message
+        showAlert = true
+    }
+
     private func resetForm() {
         name = ""
         city = ""
         address = ""
         plantHeadID = nil
-    }
-    
-    private func showAlert(with message: String?) {
-        alertMessage = message
-        showAlert = true
     }
 }

@@ -3,37 +3,35 @@ import SwiftUI
 struct PlantHeadCardView: View {
     @Bindable var viewModel: PlantHeadListViewModel
     let plantHead: PlantHead
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-
+            
             HStack {
                 Text(plantHead.username)
                     .font(.headline)
-
+                
                 Spacer()
-
-                Button {
-                    viewModel.prepareDelete(plantheadId: plantHead.id)
-                } label: {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                        .padding(8)
-                        .background(.red.opacity(0.1))
-                        .clipShape(Circle())
+                
+                if plantHead.isActive == "ACTIVE" {
+                    Button {
+                        viewModel.prepareDelete(plantheadId: plantHead.id)
+                    } label: {
+                        Image(systemName: "trash")
+                            .customDeleteButtonStyle()
+                    }
                 }
-                .buttonStyle(.plain)
             }
-
+            
             Text(plantHead.email)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-
+            
             VStack(alignment: .leading, spacing: 4) {
                 Text("Assigned Factories:")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-
+                
                 if let factories = plantHead.factoryNames, !factories.isEmpty {
                     WrappingFactoryList(factories)
                 } else {
@@ -42,27 +40,23 @@ struct PlantHeadCardView: View {
                         .font(.caption)
                 }
             }
-
-            // MARK: Status Badge
+            
             Text(plantHead.isActive)
                 .customStatusStyle(status: plantHead.isActive)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 2)
-        )
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)).shadow(radius: 6))
+        .padding(.horizontal, 12)
     }
 }
 
 struct WrappingFactoryList: View {
     let factories: [String]
-
+    
     init(_ factories: [String]) {
         self.factories = factories
     }
-
+    
     var body: some View {
         ForEach(factories, id: \.self) { factory in
             Text(factory)

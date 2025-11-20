@@ -17,54 +17,54 @@ struct AddWorkerView: View {
     
     var body: some View {
         NavigationStack {
+            AddImageView(selectedImage: $viewModel.selectedImage)
             Form {
                 Section("Factory Information") {
                     if userRole == .owner {
-                        Picker("Select Factory", selection: $viewModel.factoryID) {
-                            Text("Select a factory").tag(0)
-                            ForEach(listViewModel.factories) { factory in
-                                Text(factory.factoryName).tag(factory.id)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Picker("Select Factory", selection: $viewModel.factoryID) {
+                                Text("Select a factory").tag(0)
+                                ForEach(listViewModel.factories) { factory in
+                                    Text(factory.factoryName).tag(factory.id)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            
+                            if let error = viewModel.factoryError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
                             }
                         }
-                        .onChange(of: viewModel.factoryID) { oldValue, newValue in
-                            guard newValue != oldValue, newValue != 0 else { return }
-                            viewModel.validateFactory()
+                        .onChange(of: viewModel.factoryID) { _, newValue in
+                            guard newValue != 0 else { return }
                             viewModel.bays = []
                             viewModel.bayID = 0
-                            Task { @MainActor in
-                                await viewModel.getWorkersBay()
-                            }
-                        }
-                        
-                        if let error = viewModel.factoryError {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .font(.caption)
+                            Task { await viewModel.getWorkersBay() }
                         }
                     }
                     
                     if !viewModel.bays.isEmpty {
-                        Picker("Select Bay", selection: $viewModel.bayID) {
-                            Text("Select a bay").tag(0)
-                            ForEach(viewModel.bays) { bay in
-                                Text(bay.bayName).tag(bay.id)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Picker("Select Bay", selection: $viewModel.bayID) {
+                                Text("Select a bay").tag(0)
+                                ForEach(viewModel.bays) { bay in
+                                    Text(bay.bayName).tag(bay.id)
+                                }
                             }
-                        }
-                        .onChange(of: viewModel.bayID) { oldValue, newValue in
-                            guard newValue != oldValue, newValue != 0 else { return }
-                            viewModel.validateBay()
-                        }
-                        
-                        if let error = viewModel.bayError {
-                            Text(error)
-                                .foregroundColor(.red)
-                                .font(.caption)
+                            .pickerStyle(.menu)
+                            
+                            if let error = viewModel.bayError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
                         }
                     }
                 }
                 
                 Section("Worker Details") {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         TextField("Name", text: $viewModel.name)
                             .autocapitalization(.words)
                         if let error = viewModel.nameError {
@@ -72,31 +72,27 @@ struct AddWorkerView: View {
                         }
                     }
                     
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         TextField("Email", text: $viewModel.email)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
-                        
                         if let error = viewModel.emailError {
                             Text(error).foregroundColor(.red).font(.caption)
                         }
                     }
                 }
                 
-                Section("Worker Image") {
-                    AddImageView(selectedImage: $viewModel.selectedImage)
-                }
             }
             .navigationTitle("Create Worker")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItemGroup(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
-                        .tint(.red)
+                        .foregroundColor(.red)
                 }
                 
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         Task {
                             await viewModel.addWorker()
@@ -117,7 +113,7 @@ struct AddWorkerView: View {
                     .disabled(!viewModel.isFormValid || viewModel.isLoadingWorker)
                 }
             }
-            .disabled(viewModel.isLoadingWorker) // Prevent interaction during submit
+            .disabled(viewModel.isLoadingWorker)
             .overlay {
                 if viewModel.isLoadingWorker {
                     Color.black.opacity(0.3)
@@ -129,12 +125,16 @@ struct AddWorkerView: View {
                         }
                 }
             }
-        }
-        .onAppear {
-            // Only load bays if not owner AND factory is fixed
-            if userRole != .owner {
-                Task { @MainActor in
-                    await viewModel.getWorkersBay()
+            .alert("Message", isPresented: $viewModel.showAlert) {
+                Button("OK") {
+                    if viewModel.success { dismiss() }
+                }
+            } message: {
+                Text(viewModel.alertMessage ?? "An error occurred")
+            }
+            .onAppear {
+                if userRole != .owner {
+                    Task { await viewModel.getWorkersBay() }
                 }
             }
         }

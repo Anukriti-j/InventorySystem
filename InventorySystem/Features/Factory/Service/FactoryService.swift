@@ -88,4 +88,14 @@ final class FactoryService: FactoryServiceProtocol {
         )
         return try await APIClient.shared.request(endpoint: endpoint, responseType: GetUserWorkFactory.self)
     }
+    
+    func getLocations() async throws -> GetLocations {
+        let path = pathBuilder.buildPath("/owner/factory/cities")
+        let endpoint = APIEndpoint(
+            path: path,
+            method: .get,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: GetLocations.self)
+    }
 }

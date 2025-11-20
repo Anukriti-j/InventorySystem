@@ -1,4 +1,3 @@
-// WorkerListView.swift
 import SwiftUI
 
 struct WorkerListView: View {
@@ -18,16 +17,19 @@ struct WorkerListView: View {
             filterAndSortBar
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .animation(.spring(), value: viewModel.appliedFilters)
+            
             workerList
         }
         .navigationTitle("Workers")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if userRole == .owner || userRole == .plantHead || userRole == .chiefSupervisor {
+                if factoryId == nil,
+                   (userRole == .owner || userRole == .plantHead || userRole == .chiefSupervisor) {
                     Button("Add Worker") {
                         viewModel.showAddSheet = true
                     }
+                    .fontWeight(.medium)
                 }
             }
         }
@@ -40,7 +42,7 @@ struct WorkerListView: View {
             Text("Are you sure you want to delete this worker?")
         }
         .alert("Message", isPresented: $viewModel.showAlert) {
-            Button("OK", role: .cancel) {
+            Button("OK") {
                 viewModel.showAlert = false
                 viewModel.alertMessage = nil
             }
@@ -66,6 +68,7 @@ struct WorkerListView: View {
 }
 
 extension WorkerListView {
+    
     private var filterAndSortBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 12) {
@@ -85,9 +88,6 @@ extension WorkerListView {
                         }
                     )
                 )
-                .onChange(of: viewModel.appliedFilters) { _ in
-                    Task { await viewModel.fetchAllWorkers(reset: true) }
-                }
                 
                 Spacer(minLength: 20)
                 

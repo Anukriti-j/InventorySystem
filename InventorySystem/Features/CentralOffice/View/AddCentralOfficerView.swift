@@ -7,9 +7,9 @@ struct AddCentralOfficerView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Officer Details")) {
+                Section(header: Text(StringConstants.officerDetail)) {
                     VStack(alignment: .leading, spacing: 8) {
-                        COInputField(label: "Name", text: $viewModel.name)
+                        COInputField(label: StringConstants.name, text: $viewModel.name)
                         if let error = viewModel.nameError {
                             Text(error)
                                 .foregroundColor(.red)
@@ -18,7 +18,7 @@ struct AddCentralOfficerView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        COInputField(label: "Email", text: $viewModel.email)
+                        COInputField(label: StringConstants.email, text: $viewModel.email)
                         if let error = viewModel.emailError {
                             Text(error)
                                 .foregroundColor(.red)
@@ -27,11 +27,11 @@ struct AddCentralOfficerView: View {
                     }
                 }
             }
-            .navigationTitle("Add Officer")
+            .navigationTitle(StringConstants.addOfficer)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
+                    Button(StringConstants.cancel) {
                         dismiss()
                     }
                     .foregroundColor(.red)
@@ -51,14 +51,14 @@ struct AddCentralOfficerView: View {
                         if viewModel.isLoading {
                             ProgressView().scaleEffect(0.9)
                         } else {
-                            Text("Save").fontWeight(.semibold)
+                            Text(StringConstants.save).fontWeight(.semibold)
                         }
                     }
                     .disabled(!viewModel.isFormValid)
                 }
             }
-            .alert(viewModel.alertMessage ?? "Error", isPresented: $viewModel.showAlert) {
-                Button("OK", role: .cancel) {}
+            .alert(viewModel.alertMessage ?? StringConstants.messageTitle, isPresented: $viewModel.showAlert) {
+                Button(StringConstants.ok, role: .cancel) {}
             }
         }
     }

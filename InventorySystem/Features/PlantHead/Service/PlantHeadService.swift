@@ -6,7 +6,7 @@ final class PlantHeadService {
     let pathBuilder = APIPathBuilder()
     private init() {}
     
-    func createPlantHead(request: CreatePHRequest) async throws -> CreatePHResponse {
+    func createPlantHead(request: CreatePlantHeadRequest) async throws -> CreatePHResponse {
         let data = try JSONEncoder().encode(request)
         let endpoint = APIEndpoint(
             path: "\(APIConstants.baseURL)/owner/create-planthead",
@@ -73,5 +73,15 @@ final class PlantHeadService {
             requiresAuth: true
         )
         return try await APIClient.shared.request(endpoint: endpoint, responseType: LoadPHFactoryResponse.self)
+    }
+    
+    func deletePlantHead(plantHeadId: Int) async throws -> DeletePlantHeadResponse {
+        let path = pathBuilder.buildPath("/owner/plantheads/\(plantHeadId)/delete")
+        let endpoint = APIEndpoint(
+            path: path,
+            method: .delete,
+            requiresAuth: true
+        )
+        return try await APIClient.shared.request(endpoint: endpoint, responseType: DeletePlantHeadResponse.self)
     }
 }

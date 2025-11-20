@@ -24,12 +24,12 @@ struct PlantHeadMenuConfig {
         },
         MenuItem(icon: "building.columns", title: "Central Office Orders") {
             FactoryInjectedView { factoryId in
-                EmptyView() // handle this
+                ProductRestockOrderView()
             }
         },
         MenuItem(icon: "person.fill", title: "Chief Supervisor") {
             FactoryInjectedView { factoryId in
-                ChiefSupervisorView(factoryId: factoryId)  
+                ChiefSupervisorView(factoryId: factoryId)
             }
         },
         MenuItem(icon: "person.fill", title: "Workers") {
@@ -39,7 +39,7 @@ struct PlantHeadMenuConfig {
         },
         MenuItem(icon: "wrench.and.screwdriver", title: "Tools Request") {
             FactoryInjectedView { factoryId in
-               EmptyView() // handle this
+                ToolRequestView()
             }
         }
     ]

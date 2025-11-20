@@ -13,7 +13,7 @@ struct CentralOfficerMenuConfig {
         ),
         MenuItem(icon: "building.columns", title: "Requests") {
             FactoryInjectedView { factoryId in
-                EmptyView() // handle this
+                ProductRestockOrderView()
             }
         },
         MenuItem(icon: "person.fill", title: "Rewards") {
@@ -23,7 +23,7 @@ struct CentralOfficerMenuConfig {
         },
         MenuItem(icon: "wrench.and.screwdriver", title: "Distributors/Customers") {
             FactoryInjectedView { factoryId in
-                EmptyView() // Handle this
+                DistributorListView()
             }
         }
     ]

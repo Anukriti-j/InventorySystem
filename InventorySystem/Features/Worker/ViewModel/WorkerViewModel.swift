@@ -54,18 +54,21 @@ final class WorkerViewModel {
         
         do {
             let finalFactoryId: Int? = {
-                if userRole == .plantHead || userRole == .chiefSupervisor {
-                    return factoryId
-                }
+                if let id = factoryId { return id }
+
                 if userRole == .owner {
-                    let names = appliedFilters["Factory"] ?? []
-                    if names.count == 1,
-                       let name = names.first,
-                       let factory = factories.first(where: { $0.factoryName == name }) {
+                    if let selection = appliedFilters["Factory"], selection.count == 1,
+                       let factoryName = selection.first,
+                       let factory = factories.first(where: { $0.factoryName == factoryName }) {
                         return factory.id
                     }
                     return nil
                 }
+
+                if userRole == .plantHead || userRole == .chiefSupervisor {
+                    return factoryId
+                }
+
                 return nil
             }()
             

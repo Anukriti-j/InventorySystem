@@ -5,7 +5,7 @@ extension String {
     var isEmail: Bool {
         FormValidator.isValidEmail(self)
     }
-   
+    
     var isPassword: Bool {
         FormValidator.isValidPassword(self)
     }

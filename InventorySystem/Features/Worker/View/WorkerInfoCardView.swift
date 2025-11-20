@@ -24,8 +24,7 @@ struct WorkerInfoCardView: View {
                         viewModel.showDeletePopUp = true
                     } label: {
                         Image(systemName: "trash")
-                            .foregroundColor(.red)
-                            .frame(width: 44, height: 44)
+                            .customDeleteButtonStyle()
                     }
                     .buttonStyle(.plain)
                     .allowsHitTesting(true)
@@ -44,13 +43,9 @@ struct WorkerInfoCardView: View {
                     .customStatusStyle(status: worker.status)
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.white)
-                .shadow(radius: 4)
-        )
-        .contentShape(Rectangle())
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)).shadow(radius: 6))
+        .padding(.horizontal, 12)
         .onTapGesture { }
     }
 }

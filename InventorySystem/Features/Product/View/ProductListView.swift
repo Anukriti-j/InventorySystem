@@ -3,6 +3,7 @@ import SwiftUI
 struct ProductsListView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = ProductsViewModel()
+    @State private var isRefreshing = false
     let userRole: UserRole?
     
     init(userRole: UserRole?) {
@@ -31,7 +32,9 @@ struct ProductsListView: View {
                 }
             }
             .task { await viewModel.loadInitialData() }
-            .refreshable { await viewModel.fetchProducts(reset: true) }
+            .refreshable {
+                Task { await pullToRefresh()}
+            }
             
             .alert("Delete Product", isPresented: $viewModel.showDeletePopUp) {
                 Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
@@ -42,17 +45,16 @@ struct ProductsListView: View {
                 Text("Are you 100% sure you want to delete this product?")
             }
             
-            // General Alert
             .alert(viewModel.alertMessage ?? "Error", isPresented: $viewModel.showAlert) {
                 Button("OK") {}
             }
             
             .sheet(isPresented: $viewModel.showAddSheet) {
-                AddProductView(parentViewModel: viewModel)
+                AddOrUpdateProductView(parentViewModel: viewModel, mode: .add)
             }
             .sheet(isPresented: $viewModel.showEditSheet) {
                 if let product = viewModel.editingProduct {
-                    EditProductView(product: product)
+                    AddOrUpdateProductView(parentViewModel: viewModel, mode: .edit, product: product)
                 }
             }
         }
@@ -112,15 +114,29 @@ extension ProductsListView {
             }
             else if viewModel.products.isEmpty {
                 VStack(spacing: 16) {
-                    Image(systemName: "cart.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    Text("No products found")
-                        .font(.title3.bold())
-                    Text("Try adjusting filters or search")
+                    
+                    Text("No Products found")
+                        .font(.headline)
                         .foregroundColor(.secondary)
+                    Text("Try adjusting your filters or search criteria.")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                    Button {
+                        Task { await retryLoad() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .font(.callout.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(isRefreshing)
+                    .opacity(isRefreshing ? 0.6 : 1.0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             }
             else {
                 List {
@@ -152,5 +168,15 @@ extension ProductsListView {
         }
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
+    }
+    
+    private func retryLoad() async {
+        isRefreshing = true
+        await viewModel.fetchProducts(reset: true)
+        isRefreshing = false
+    }
+    
+    private func pullToRefresh() async {
+        await viewModel.refreshWithoutCancel()
     }
 }

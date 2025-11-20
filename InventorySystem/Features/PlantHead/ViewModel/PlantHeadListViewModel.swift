@@ -16,25 +16,25 @@ final class PlantHeadListViewModel {
     var appliedFilters: [String: Set<String>] = [:]
     var selectedSort: String?
     private var debounceTask: Task<Void, Never>?
-
+    
     func fetchPlantHeads(reset: Bool = false) async {
         guard !isLoading else { return }
         isLoading = true
         defer { isLoading = false }
-
+        
         if reset {
             plantHeads = []
             currentPage = 0
         }
-
+        
         let statusParam: String? = {
             let statuses = appliedFilters["Status"] ?? []
             return statuses.isEmpty ? nil : statuses.map { $0.lowercased() == "active" ? "ACTIVE" : "INACTIVE" }.joined(separator: ",")
         }()
-
+        
         let (sortByParam, sortDirectionParam) = mapSortToParams(selectedSort)
         let searchParam = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : searchText
-
+        
         do {
             let response = try await PlantHeadService.shared.fetchPlantHeads(
                 page: currentPage,
@@ -47,7 +47,7 @@ final class PlantHeadListViewModel {
             )
             totalPages = response.pagination.totalPages
             let newItems = response.data
-
+            
             if reset {
                 plantHeads = newItems
                 currentPage = 1
@@ -59,23 +59,23 @@ final class PlantHeadListViewModel {
             showAlert(with: "Cannot fetch PlantHeads: \(error.localizedDescription)")
         }
     }
-
+    
     func loadNextPageIfNeeded(currentItem: PlantHead?) async {
         guard let currentItem, plantHeads.last?.id == currentItem.id else { return }
         guard currentPage < totalPages, !isLoading else { return }
         await fetchPlantHeads()
     }
-
+    
     func applyFilters(_ filters: [String: Set<String>]) async {
         appliedFilters = filters.filter { !$0.value.isEmpty }
         await fetchPlantHeads(reset: true)
     }
-
+    
     func applySort(_ sortOption: String?) async {
         selectedSort = sortOption
         await fetchPlantHeads(reset: true)
     }
-
+    
     func updateSearchText(_ newText: String) {
         searchText = newText
         debounceTask?.cancel()
@@ -85,7 +85,7 @@ final class PlantHeadListViewModel {
             await self.fetchPlantHeads(reset: true)
         }
     }
-
+    
     private func mapSortToParams(_ sort: String?) -> (String?, String?) {
         guard let sort = sort else { return (nil, nil) }
         switch sort {
@@ -94,31 +94,39 @@ final class PlantHeadListViewModel {
         default: return (nil, nil)
         }
     }
-
+    
     func prepareDelete(plantheadId: Int) {
         plantheadToDelete = plantheadId
         showDeletePopUp = true
     }
-
+    
     func cancelDelete() {
         showDeletePopUp = false
         plantheadToDelete = nil
     }
-
+    
     func confirmDelete() async {
         guard let id = plantheadToDelete else { return }
         plantHeads.removeAll { $0.id == id }
         do {
-            let response = try await CentralOfficeService.shared.deleteCentralOfficer(id: id)
+            let response = try await PlantHeadService.shared.deletePlantHead(plantHeadId: id)
             showAlert(with: response.message)
         } catch {
             showAlert(with: "Failed to delete PlantHead")
         }
         cancelDelete()
     }
-
+    
     private func showAlert(with message: String) {
         alertMessage = message
         showAlert = true
+    }
+    
+    func refreshWithoutCancel() async {
+        plantHeads = []
+        currentPage = 0
+        totalPages = 1
+        isLoading = false
+        await fetchPlantHeads(reset: true)
     }
 }

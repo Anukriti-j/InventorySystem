@@ -48,41 +48,44 @@ struct MerchandiseCardView: View {
                 Spacer()
             }
             .padding()
-            
-            Divider()
-            
+            if merchandise.status == "ACTIVE" {
+                Divider()
+            }
             HStack(spacing: 0) {
-                Button {
-                    viewModel.selectedMerchandise = merchandise
-                    viewModel.showEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                        .frame(maxWidth: .infinity)
-                }
-                .foregroundColor(.blue)
-                .padding(.vertical, 12)
                 
-                Divider().frame(height: 20)
-                
-                Button {
-                    viewModel.merchandiseToDelete = merchandise
-                    viewModel.showDeleteAlert = true
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                        .frame(maxWidth: .infinity)
+                if merchandise.status == "ACTIVE" {
+                    Button {
+                        viewModel.selectedMerchandise = merchandise
+                        viewModel.showEditSheet = true
+                    } label: {
+                        Image(systemName: "pencil")
+                            .customEditButtonStyle()
+                    }
+                    .foregroundColor(.blue)
+                    .padding(8)
+                    
+                   Spacer()
+                    Button {
+                        viewModel.merchandiseToDelete = merchandise
+                        viewModel.showDeleteAlert = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .customDeleteButtonStyle()
+                    }
+                    .foregroundColor(.red)
+                    .padding(8)
                 }
-                .foregroundColor(.red)
-                .padding(.vertical, 12)
+                
             }
         }
         .sheet(isPresented: $viewModel.showEditSheet, content: {
             if let selectedMerchandise = viewModel.selectedMerchandise {
-                EditMerchandiseView(merchandise: selectedMerchandise)
+                EditMerchandiseView(merchandise: selectedMerchandise, parentViewModel: viewModel)
                 
             }
         })
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 1)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Color(.systemBackground)).shadow(radius: 6))
+        .padding(.horizontal, 12)
     }
 }

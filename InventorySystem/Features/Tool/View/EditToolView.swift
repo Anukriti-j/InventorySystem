@@ -2,90 +2,118 @@ import SwiftUI
 import Kingfisher
 
 struct EditToolView: View {
-    @StateObject private var viewModel: EditToolViewModel
+    @State private var viewModel: EditToolViewModel
     @Environment(\.dismiss) private var dismiss
+    @Bindable var parentViewModel: ToolsListViewModel
     
-    init(tool: Tool) {
-        _viewModel = StateObject(wrappedValue: EditToolViewModel(tool: tool))
+    init(tool: Tool, parentViewModel: ToolsListViewModel) {
+        self.parentViewModel = parentViewModel
+        _viewModel = State(wrappedValue: EditToolViewModel(tool: tool))
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                
-                AddImageView(selectedImage: $viewModel.selectedImage, urlString: viewModel.toolImageURL)
-                    .frame(height: 180)
-                    .clipped()
-                
-                VStack(spacing: 16) {
-                    TextField("Tool Name", text: $viewModel.name)
-                        .textFieldStyle(.roundedBorder)
-                        .autocapitalization(.words)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
                     
-                    TextField("Description", text: $viewModel.description, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
-                        .lineLimit(3...6)
+                    AddImageView(selectedImage: $viewModel.selectedImage, urlString: viewModel.toolImageURL)
+                        .frame(height: 180)
+                        .clipped()
                     
-                    Picker("Category", selection: $viewModel.selectedCategoryID) {
-                        if viewModel.selectedCategoryID == nil {
-                            Text("Select category")
-                                .foregroundColor(.secondary)
-                                .tag(Optional<Int>(nil))
+                    VStack(spacing: 16) {
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Tool Name", text: $viewModel.name)
+                                .textFieldStyle(.roundedBorder)
+                                .autocapitalization(.words)
+                            
+                            if let error = viewModel.nameError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
                         }
                         
-                        ForEach(viewModel.categories) { category in
-                            Text(category.categoryName)
-                                .tag(Optional(category.id))
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Description", text: $viewModel.description, axis: .vertical)
+                                .textFieldStyle(.roundedBorder)
+                                .lineLimit(3...6)
+                            
+                            if let error = viewModel.descriptionError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
                         }
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Picker("Category", selection: Binding(
+                                get: { viewModel.selectedCategoryID },
+                                set: { viewModel.selectedCategoryID = $0 }
+                            )) {
+                                Text("Select category")
+                                    .foregroundColor(.secondary)
+                                    .tag(Optional<Int>(nil))
+                                
+                                ForEach(viewModel.categories) { category in
+                                    Text(category.categoryName)
+                                        .tag(Optional(category.id))
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            
+                            if let error = viewModel.categoryError {
+                                Text(error)
+                                    .foregroundColor(.red)
+                                    .font(.caption)
+                            }
+                        }
+                        
+                        Stepper("Threshold: \(viewModel.threshold)", value: $viewModel.threshold, in: 0...50)
+                        
+                        Toggle("Is Perishable", isOn: $viewModel.isPerishableBool)
+                            .toggleStyle(SwitchToggleStyle(tint: .green))
+                        
+                        Toggle("Is Expensive", isOn: $viewModel.isExpensiveBool)
+                            .toggleStyle(SwitchToggleStyle(tint: .red))
                     }
-                    .pickerStyle(.menu)
-                    .labelsHidden() // hides the "Category" label inside picker
+                    .padding(.horizontal)
                     
-                    Stepper("Threshold: \(viewModel.threshold)", value: $viewModel.threshold, in: 0...50)
-                    Stepper("Available Quantity: \(viewModel.availableQuantity)", value: $viewModel.availableQuantity, in: 0...1000)
-                    
-                    Toggle("Is Perishable", isOn: $viewModel.isPerishableBool)
-                        .toggleStyle(SwitchToggleStyle(tint: .purple))
-                    
-                    Toggle("Is Expensive", isOn: $viewModel.isExpensiveBool)
-                        .toggleStyle(SwitchToggleStyle(tint: .purple))
-                }
-                .padding(.horizontal)
-                
-                // Update Button
-                Button {
-                    Task { await viewModel.updateTool() }
-                } label: {
-                    Group {
+                    Button {
+                        Task {
+                            await viewModel.updateTool()
+                            if viewModel.success {
+                                await parentViewModel.fetchTools(reset: true)
+                                dismiss()
+                            }
+                        }
+                    } label: {
                         if viewModel.isLoading {
-                            ProgressView().tint(.white)
+                            ProgressView()
+                                .tint(.white)
                         } else {
                             Text("Update Tool")
-                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(viewModel.isFormValid ? Color.purple : Color.gray.opacity(0.5))
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .customStyle(isDisabled: !viewModel.isFormValid || !viewModel.hasChanges || viewModel.isLoading)
+                    .disabled(!viewModel.isFormValid || viewModel.isLoading || !viewModel.hasChanges)
+                    .padding(.horizontal)
                 }
-                .disabled(!viewModel.isFormValid || viewModel.isLoading)
-                .padding(.horizontal)
+                .padding(.vertical)
+                .navigationTitle("Edit Tool")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel", role: .cancel) { dismiss() }
+                            .foregroundColor(.red)
+                    }
+                }
             }
-            .padding(.vertical)
-        }
-        .navigationTitle("Edit Tool")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel", role: .cancel) { dismiss() }
-                    .foregroundColor(.red)
-            }
-        }
-        .alert(viewModel.alertMessage ?? "", isPresented: $viewModel.showAlert) {
-            Button("OK") {
-                if viewModel.success { dismiss() }
+            .alert(viewModel.alertMessage ?? "Message", isPresented: $viewModel.showAlert) {
+                Button("OK") {
+                    if viewModel.success { dismiss() }
+                }
             }
         }
         .onAppear {

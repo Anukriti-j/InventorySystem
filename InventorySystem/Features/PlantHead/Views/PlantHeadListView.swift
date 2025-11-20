@@ -2,14 +2,15 @@ import SwiftUI
 
 struct PlantHeadListView: View {
     @State private var viewModel = PlantHeadListViewModel()
-
+    @State private var isRefreshing = false
+    
     var body: some View {
         NavigationStack {
             VStack {
                 filterAndSortBar
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .animation(.spring(), value: viewModel.appliedFilters)
-
+                
                 plantHeadList
             }
             .navigationTitle("PlantHeads")
@@ -26,7 +27,7 @@ struct PlantHeadListView: View {
                 await viewModel.fetchPlantHeads(reset: true)
             }
             .sheet(isPresented: $viewModel.showAddSheet) {
-                AddPlantHeadView()
+                AddPlantHeadView(parentViewModel: viewModel)
             }
             .alert("Delete PlantHead", isPresented: $viewModel.showDeletePopUp) {
                 Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
@@ -62,9 +63,9 @@ extension PlantHeadListView {
                 .onChange(of: viewModel.appliedFilters) { _, _ in
                     Task { await viewModel.applyFilters(viewModel.appliedFilters) }
                 }
-
+                
                 Spacer(minLength: 20)
-
+                
                 SortMenuView(
                     title: "Sort",
                     options: ["Sort by Name A-Z", "Sort by Name Z-A"],
@@ -82,7 +83,7 @@ extension PlantHeadListView {
         .frame(height: 50)
         .padding(.top, 8)
     }
-
+    
     private var plantHeadList: some View {
         ZStack {
             if viewModel.isLoading && viewModel.plantHeads.isEmpty {
@@ -91,17 +92,29 @@ extension PlantHeadListView {
             }
             else if viewModel.plantHeads.isEmpty {
                 VStack(spacing: 16) {
-                    Text("No PlantHeads")
-                        .font(.title3)
+                    
+                    Text("No PlantHead found")
+                        .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("Tap 'Add +' to create one.")
+                    Text("Try adjusting your filters or search criteria.")
+                        .font(.subheadline)
                         .foregroundColor(.gray)
-                    Button("Retry") {
-                        Task { await viewModel.fetchPlantHeads(reset: true) }
+                    Button {
+                        Task { await retryLoad() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .font(.callout.bold())
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .disabled(isRefreshing)
+                    .opacity(isRefreshing ? 0.6 : 1.0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             }
             else {
                 List {
@@ -113,7 +126,7 @@ extension PlantHeadListView {
                                 await viewModel.loadNextPageIfNeeded(currentItem: planthead)
                             }
                     }
-
+                    
                     if viewModel.isLoading && viewModel.currentPage < viewModel.totalPages {
                         ProgressView("Loading more...")
                             .frame(maxWidth: .infinity)
@@ -129,7 +142,7 @@ extension PlantHeadListView {
                 }
                 .listStyle(.plain)
                 .refreshable {
-                    await viewModel.fetchPlantHeads(reset: true)
+                    Task { await pullToRefresh() }
                 }
             }
         }
@@ -141,5 +154,15 @@ extension PlantHeadListView {
         }
         .autocorrectionDisabled()
         .textInputAutocapitalization(.never)
+    }
+    
+    private func retryLoad() async {
+        isRefreshing = true
+        await viewModel.fetchPlantHeads(reset: true)
+        isRefreshing = false
+    }
+    
+    private func pullToRefresh() async {
+        await viewModel.refreshWithoutCancel()
     }
 }

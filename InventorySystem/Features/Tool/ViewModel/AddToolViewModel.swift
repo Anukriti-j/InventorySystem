@@ -1,61 +1,106 @@
+import Foundation
 import SwiftUI
 
 @MainActor
 final class AddToolViewModel: ObservableObject {
     @Published var name = ""
     @Published var description = ""
-    @Published var newCategoryName: String? = nil
-    @Published var isPerishable: String = "NO"
-    @Published var isExpensive: String = "NO"
-    @Published var threshold = 0
+    @Published var threshold = 5
+    @Published var isPerishableBool = false
+    @Published var isExpensiveBool = false
     @Published var selectedImage: UIImage?
-    @Published var selectedCategoryID: Int? = nil
+    @Published var selectedCategoryID: Int?
     @Published var categories: [ToolCategory] = []
-    
     @Published var isAddingNewCategory = false
+    @Published var newCategoryName: String?
     
     @Published var isLoading = false
-    @Published var alertMessage: String?
     @Published var showAlert = false
+    @Published var alertMessage = ""
+    @Published var success = false
     
-    func createTool() async {
-        isLoading = true
-        defer { isLoading = false }
-        
-        let categoryIDToSend = isAddingNewCategory ? nil : selectedCategoryID
-        let newCategoryToSend = isAddingNewCategory ? newCategoryName : ""
-        
-        let request = CreateToolRequest(
-            name: name,
-            description: description,
-            categoryID: categoryIDToSend ?? nil,
-            newCategoryName: newCategoryToSend ?? nil,
-            imageFile: "",
-            isPerishable: isPerishable,
-            isExpensive: isExpensive,
-            threshold: threshold
-        )
-        
-        do {
-            let response = try await ToolService.shared.createTool(request: request, image: selectedImage)
-            showAlert(with: "Tool created: \(response.message)")
-            print(response)
-        } catch {
-            showAlert(with: "Error: \(error.localizedDescription)")
+    var nameError: String? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "Tool name is required" }
+        if trimmed.count < 3 { return "Name must be at least 3 characters" }
+        return nil
+    }
+    
+    var descriptionError: String? {
+        let trimmed = description.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { return "Description is required" }
+        if trimmed.count < 5 { return "Description must be at least 5 characters" }
+        return nil
+    }
+    
+    var categoryError: String? {
+        if isAddingNewCategory {
+            let trimmed = newCategoryName?.trimmingCharacters(in: .whitespaces) ?? ""
+            if trimmed.isEmpty { return "Category name is required" }
+            if trimmed.count < 3 { return "Category name must be at least 3 characters" }
+            return nil
+        } else {
+            return selectedCategoryID == nil ? "Please select a category" : nil
         }
+    }
+    
+    var isFormValid: Bool {
+        nameError == nil &&
+        descriptionError == nil &&
+        categoryError == nil &&
+        !isLoading
     }
     
     func getCategories() async {
         do {
             let response = try await ToolService.shared.getCategories()
-            categories = response.data // adjust based on your API response model
+            categories = response.data
         } catch {
-            showAlert(with: "Error fetching categories: \(error.localizedDescription)")
+            showAlert(message: "Failed to load categories")
         }
     }
     
-    private func showAlert(with message: String) {
+    func createTool() async {
+        guard isFormValid else { return }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        let request = CreateToolRequest(
+            name: name.trimmingCharacters(in: .whitespaces),
+            description: description.trimmingCharacters(in: .whitespaces),
+            categoryID: isAddingNewCategory ? nil : selectedCategoryID,
+            newCategoryName: isAddingNewCategory ? newCategoryName?.trimmingCharacters(in: .whitespaces) : nil,
+            imageFile: "",
+            isPerishable: isPerishableBool ? "YES" : "NO",
+            isExpensive: isExpensiveBool ? "YES" : "NO",
+            threshold: threshold
+        )
+        
+        do {
+            let response = try await ToolService.shared.createTool(request: request, image: selectedImage)
+            success = true
+            showAlert(message: "Tool created successfully!")
+            resetForm()
+        } catch {
+            showAlert(message: "Failed: \(error.localizedDescription)")
+        }
+    }
+    
+    private func showAlert(message: String) {
         alertMessage = message
         showAlert = true
+    }
+    
+    private func resetForm() {
+        name = ""
+        description = ""
+        threshold = 5
+        isPerishableBool = false
+        isExpensiveBool = false
+        selectedImage = nil
+        selectedCategoryID = nil
+        isAddingNewCategory = false
+        newCategoryName = nil
     }
 }

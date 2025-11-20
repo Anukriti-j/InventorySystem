@@ -11,15 +11,16 @@ struct CentralOfficerCardView: View {
                     .font(.headline)
                 Spacer()
                 
-                Button {
-                    viewModel.prepareDelete(centralOfficerID: officer.id)
-                } label: {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                        .frame(width: 44, height: 44)
+                if officer.isActive == "ACTIVE" {
+                    Button {
+                        viewModel.prepareDelete(centralOfficerID: officer.id)
+                    } label: {
+                        Image(systemName: "trash")
+                            .customDeleteButtonStyle()
+                    }
+                    .buttonStyle(.plain)
+                    .allowsHitTesting(true)
                 }
-                .buttonStyle(.plain)
-                .allowsHitTesting(true)
             }
             
             Text(officer.email)

@@ -6,13 +6,13 @@ struct SignUpView: View {
     
     var body: some View {
         VStack {
-            Text("Sign Up")
+            Text(StringConstants.signUp)
                 .font(.system(size: 30, weight: .bold))
                 .padding()
             
             VStack(alignment: .leading, spacing: 8) {
                 InputField(
-                    label: "Name",
+                    label: StringConstants.name,
                     text: $viewModel.name,
                     focusedField: $focusedField,
                     field: Field.name
@@ -27,7 +27,7 @@ struct SignUpView: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 InputField(
-                    label: "Email",
+                    label: StringConstants.email,
                     text: $viewModel.email,
                     focusedField: $focusedField,
                     field: Field.email
@@ -42,7 +42,7 @@ struct SignUpView: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 SecureInputField(
-                    label: "Password",
+                    label: StringConstants.password,
                     text: $viewModel.password,
                     focusedField: $focusedField,
                     field: Field.password
@@ -58,7 +58,7 @@ struct SignUpView: View {
             Button {
                 viewModel.handleSignUp()
             } label: {
-                Text("Sign Up")
+                Text(StringConstants.signUp)
                     .foregroundColor(Color.text)
             }
             .customStyle()

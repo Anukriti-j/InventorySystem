@@ -1,6 +1,6 @@
 import Foundation
 
-struct CreateProductRequest: Codable {
+struct CreateOrUpdateProductRequest: Codable {
     let name, productDescription: String
     let categoryID: Int?
     let newCategoryName: String?
